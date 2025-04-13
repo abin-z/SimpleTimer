@@ -7,35 +7,42 @@
 #include <mutex>
 #include <thread>
 
-class simple_timer
+class SimpleTimer
 {
   using clock = std::chrono::steady_clock;  // 单调时钟
  public:
+  enum class State : unsigned char
+  {
+    Stopped = 0,  // 停止
+    Running = 1,  // 运行中
+    Paused = 2,   // 暂停
+  };
+
   /// @brief 简单定时器
   /// @param interval std::chrono::duration 定时器间隔
   /// @param one_shot 是否只触发一次
   template <typename Rep, typename Period>
-  simple_timer(std::chrono::duration<Rep, Period> interval, bool one_shot = false) :
-    interval_(interval), one_shot_(one_shot), running_(false)
+  SimpleTimer(std::chrono::duration<Rep, Period> interval, bool one_shot = false) :
+    interval_(interval), one_shot_(one_shot), state_(State::Stopped)
   {
   }
 
   /// @brief 简单定时器
   /// @param milliseconds 定时器间隔(毫秒)
   /// @param one_shot 是否只触发一次
-  explicit simple_timer(long long milliseconds, bool one_shot = false) :
-    simple_timer(std::chrono::milliseconds(milliseconds), one_shot)  // 代理到主构造函数
+  explicit SimpleTimer(long long milliseconds, bool one_shot = false) :
+    SimpleTimer(std::chrono::milliseconds(milliseconds), one_shot)  // 代理到主构造函数
   {
   }
 
   /// @brief 简单定时器
   /// @param one_shot 是否只触发一次
-  simple_timer(bool one_shot = false) : simple_timer(std::chrono::seconds(10), one_shot)  // 默认间隔为10秒
+  SimpleTimer(bool one_shot = false) : SimpleTimer(std::chrono::seconds(10), one_shot)  // 默认间隔为10秒
   {
   }
 
   /// @brief 析构函数
-  ~simple_timer()
+  ~SimpleTimer()
   {
     stop();
   }
@@ -43,14 +50,14 @@ class simple_timer
   template <typename Func>
   void start(Func&& f)
   {
-    stop();  // 确保没有其他线程在运行(替换旧任务)
-    running_ = true;
+    stop();                                        // 确保没有其他线程在运行(替换旧任务)
+    state_ = State::Running;                       // 设置状态为运行中
     auto task = std::move(std::forward<Func>(f));  // 完美转发后再 move，提高效率
     // 使用 std::thread 创建一个新的线程来执行定时器任务
     thread_ = std::thread([this, task]() mutable {
       std::unique_lock<std::mutex> lock(mutex_);
       auto next_time = clock::now() + interval_;  // 计算下次执行时间
-      while (running_)                            // 主循环，只要定时器处于运行状态就持续循环
+      while (state_ == State::Running)            // 主循环，只要定时器处于运行状态就持续循环
       {
         /**
          * cv.wait_until(lock, time_point, predicate);
@@ -68,17 +75,18 @@ class simple_timer
          * - `wait_until` 返回 false 表示已超时，且条件仍未满足（即超时触发任务）
          *
          * 在定时器场景下：
-         * - 若 `stop()` 被调用，`running_` 被设置为 false，`notify_all()` 唤醒所有等待的线程，
-         *   但只有当 `running_ == false` 时，lambda 会返回 true，触发退出循环。
+         * - 当调用 stop() 或 pause() 时，`state_` 被设置为非 `State::Running`，并通过 `notify_all()` 唤醒等待线程。
+         * - 如果 `state_ != State::Running`，则 `wait_until` 会返回 true，跳出循环。
+         * - 如果超时未达到条件，`wait_until` 会返回 false，触发定时器任务。
          */
-        if (cv_.wait_until(lock, next_time, [this]() { return !running_; }))
+        if (cv_.wait_until(lock, next_time, [this]() { return state_ != State::Running; }))
         {
           break;  // 条件变量被唤醒，且检查到 `running_ == false`，退出循环
         }
         task();  // 执行任务
         if (one_shot_)
         {
-          running_ = false;  // 如果是单次定时器，停止运行
+          state_ = State::Stopped;  // 如果是单次定时器，停止运行
           break;
         }
         next_time += interval_;  // 更新下次执行时间
@@ -88,7 +96,7 @@ class simple_timer
 
   void stop()
   {
-    running_ = false;
+    state_ = State::Stopped;
     cv_.notify_all();  // 唤醒等待的线程
     if (thread_.joinable())
     {
@@ -96,13 +104,48 @@ class simple_timer
     }
   }
 
-  bool is_running() const
+  void pause()
   {
-    return running_;  // 返回定时器是否在运行
+    if (state_ == State::Running)
+    {
+      state_ = State::Paused;
+    }
   }
 
-  // 获取定时器的当前间隔
-  std::chrono::milliseconds get_interval() const
+  void resume()
+  {
+    if (state_ == State::Paused)
+    {
+      state_ = State::Running;
+      cv_.notify_all();  // 唤醒正在等待的线程
+    }
+  }
+
+  /// @brief 获取定时器的当前状态
+  /// @return State 定时器状态
+  State state() const
+  {
+    return state_;  // 返回定时器状态
+  }
+  /// @brief 返回定时器是否在运行
+  bool is_running() const
+  {
+    return state_ == State::Running;  // 返回定时器是否在运行
+  }
+  /// @brief 获取定时器是否在暂停
+  bool is_paused() const
+  {
+    return state_ == State::Paused;  // 返回定时器是否在暂停
+  }
+  /// @brief 获取定时器是否在停止
+  bool is_stopped() const
+  {
+    return state_ == State::Stopped;  // 返回定时器是否在停止
+  }
+
+  /// @brief 获取定时器的当前间隔
+  /// @return std::chrono::milliseconds 定时器间隔
+  std::chrono::milliseconds interval() const
   {
     return std::chrono::duration_cast<std::chrono::milliseconds>(interval_);
   }
@@ -127,7 +170,7 @@ class simple_timer
   // 定时器间隔, 默认10秒
   clock::duration interval_ = std::chrono::seconds(10);
   bool one_shot_ = false;       // 是否只触发一次
-  std::atomic<bool> running_;   // 定时器是否运行
+  std::atomic<State> state_;    // 定时器状态
   std::thread thread_;          // 定时器线程
   std::mutex mutex_;            // 互斥锁，确保线程安全
   std::condition_variable cv_;  // 条件变量，用于暂停和恢复
