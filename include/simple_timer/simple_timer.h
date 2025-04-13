@@ -81,7 +81,7 @@ class SimpleTimer
          */
         if (cv_.wait_until(lock, next_time, [this]() { return state_ != State::Running; }))
         {
-          break;  // 条件变量被唤醒，且检查到 `running_ == false`，退出循环
+          break;  // 条件变量被唤醒，且检查到 `state_ != State::Running`，退出循环
         }
         task();  // 执行任务
         if (one_shot_)
@@ -104,22 +104,23 @@ class SimpleTimer
     }
   }
 
-  void pause()
-  {
-    if (state_ == State::Running)
-    {
-      state_ = State::Paused;
-    }
-  }
+  // void pause()
+  // {
+  //   if (state_ == State::Running)
+  //   {
+  //     state_ = State::Paused;
+  //   }
+  // }
 
-  void resume()
-  {
-    if (state_ == State::Paused)
-    {
-      state_ = State::Running;
-      cv_.notify_all();  // 唤醒正在等待的线程
-    }
-  }
+  // /// @brief TODO 存在问题, 无法唤醒
+  // void resume()
+  // {
+  //   if (state_ == State::Paused)
+  //   {
+  //     state_ = State::Running;
+  //     cv_.notify_all();  // 唤醒正在等待的线程
+  //   }
+  // }
 
   /// @brief 获取定时器的当前状态
   /// @return State 定时器状态
