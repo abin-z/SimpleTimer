@@ -3,6 +3,6 @@
 add_library(simple_timer INTERFACE)
 target_include_directories(simple_timer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
-# Linux下需要连接pthread
+# POSIX系统下使用 pthread 库
 find_package(Threads REQUIRED)
 target_link_libraries(simple_timer INTERFACE Threads::Threads)

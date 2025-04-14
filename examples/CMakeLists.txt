@@ -1,8 +1,12 @@
-add_executable(main main.cpp)
-target_link_libraries(main PRIVATE simple_timer)
+add_executable(timer_set_interval timer_set_interval.cpp)
+target_link_libraries(timer_set_interval PRIVATE simple_timer)
 
 add_executable(timer_basic timer_basic.cpp)
 target_link_libraries(timer_basic PRIVATE simple_timer)
 
 add_executable(timer_pause timer_pause.cpp)
 target_link_libraries(timer_pause PRIVATE simple_timer)
+
+
+add_executable(timer_one_shot timer_one_shot.cpp)
+target_link_libraries(timer_one_shot PRIVATE simple_timer)

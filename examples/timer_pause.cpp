@@ -9,7 +9,7 @@ int64_t get_ms()
 
 int main()
 {
-  SimpleTimer timer(std::chrono::milliseconds(200));
+  SimpleTimer timer(std::chrono::milliseconds(200));  // 200ms执行一次
 
   timer.start([]() { std::cout << get_ms() << ": Timer task executed!" << std::endl; });
 
