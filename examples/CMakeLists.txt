@@ -7,6 +7,8 @@ target_link_libraries(timer_basic PRIVATE simple_timer)
 add_executable(timer_pause timer_pause.cpp)
 target_link_libraries(timer_pause PRIVATE simple_timer)
 
-
 add_executable(timer_one_shot timer_one_shot.cpp)
 target_link_libraries(timer_one_shot PRIVATE simple_timer)
+
+add_executable(timer_callable timer_callable.cpp)
+target_link_libraries(timer_callable PRIVATE simple_timer)
