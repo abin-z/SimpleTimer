@@ -2,3 +2,7 @@
 # INTERFACE 目标不会生成 .a 或 .so 文件，但可以被 target_link_libraries 依赖。
 add_library(simple_timer INTERFACE)
 target_include_directories(simple_timer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+
+# Linux下需要连接pthread
+find_package(Threads REQUIRED)
+target_link_libraries(simple_timer INTERFACE Threads::Threads)
