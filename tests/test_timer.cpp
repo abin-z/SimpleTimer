@@ -10,7 +10,7 @@ using namespace std::chrono;
 
 TEST_CASE("SimpleTimer triggers task at interval", "[SimpleTimer]")
 {
-  std::atomic<int> counter = 0;
+  std::atomic<int> counter(0);
   SimpleTimer timer(milliseconds(100));  // 100ms
   timer.start([&]() { counter++; });
 
@@ -23,7 +23,7 @@ TEST_CASE("SimpleTimer triggers task at interval", "[SimpleTimer]")
 
 TEST_CASE("SimpleTimer stops properly", "[SimpleTimer]")
 {
-  std::atomic<int> counter = 0;
+  std::atomic<int> counter(0);
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
 
@@ -37,7 +37,7 @@ TEST_CASE("SimpleTimer stops properly", "[SimpleTimer]")
 
 TEST_CASE("SimpleTimer one-shot mode triggers only once", "[SimpleTimer]")
 {
-  std::atomic<int> counter = 0;
+  std::atomic<int> counter(0);
   SimpleTimer timer(milliseconds(50), true);  // one-shot 模式
   timer.start([&]() { counter++; });
 
@@ -48,7 +48,7 @@ TEST_CASE("SimpleTimer one-shot mode triggers only once", "[SimpleTimer]")
 
 TEST_CASE("SimpleTimer can pause and resume", "[SimpleTimer]")
 {
-  std::atomic<int> counter = 0;
+  std::atomic<int> counter(0);
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
 
@@ -68,7 +68,7 @@ TEST_CASE("SimpleTimer can pause and resume", "[SimpleTimer]")
 
 TEST_CASE("SimpleTimer updates interval immediately", "[SimpleTimer]")
 {
-  std::atomic<int> counter = 0;
+  std::atomic<int> counter(0);
   SimpleTimer timer(milliseconds(100));  // 初始100ms
   timer.start([&]() { counter++; });
 
@@ -83,7 +83,7 @@ TEST_CASE("SimpleTimer updates interval immediately", "[SimpleTimer]")
 
 TEST_CASE("SimpleTimer restart works correctly", "[SimpleTimer]")
 {
-  std::atomic<int> counter = 0;
+  std::atomic<int> counter(0);
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
 
@@ -98,7 +98,7 @@ TEST_CASE("SimpleTimer restart works correctly", "[SimpleTimer]")
 
 TEST_CASE("SimpleTimer multiple start does not crash", "[SimpleTimer]")
 {
-  std::atomic<int> counter = 0;
+  std::atomic<int> counter(0);
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
 
