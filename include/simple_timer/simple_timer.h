@@ -87,6 +87,14 @@ class SimpleTimer
     stop();
   }
 
+  // 禁用拷贝构造函数和拷贝赋值运算符
+  SimpleTimer(const SimpleTimer&) = delete;
+  SimpleTimer& operator=(const SimpleTimer&) = delete;
+
+  // 禁用移动构造函数和移动赋值运算符
+  SimpleTimer(SimpleTimer&&) = delete;
+  SimpleTimer& operator=(SimpleTimer&&) = delete;
+
   /// @brief 启动定时器
   /// @tparam Func 可调用对象类型
   /// @param f 可调用对象, 定时器到期后执行的任务
