@@ -1,3 +1,18 @@
+/**
+ * @file: simple_timer.h
+ * @version: v0.9.0
+ * @description: 一个简单易用的定时器, 适合于需要定时执行任务的场景, 支持暂停/恢复/修改时间间隔等功能.
+ * - 特性:
+ *    - 该定时器使用 std::thread 和 std::condition_variable 实现, 线程安全
+ *    - 该定时器的时间精度取决于系统时钟的精度,通常为毫秒级别
+ *    - 默认 std::chrono::duration 作为时间间隔, 可以使用任意时间单位(秒/毫秒/微秒/纳秒)
+ *    - 允许单次和重复执行, 支持暂停/恢复/重启定时器, 支持修改定时器间隔
+ * @author: abin
+ * @date: 2025-04-12
+ * @license: MIT
+ * @repository: https://github.com/abin-z/SimpleTimer
+ */
+
 #ifndef SIMPLE_TIMER_H
 #define SIMPLE_TIMER_H
 
@@ -8,25 +23,30 @@
 #include <thread>
 
 /**
+ * @brief 使用 std::condition_variable 的 wait_until 方法 (也可以使用wait_for方法, 但是会累计误差)
+ * 函数原型:
  * cv.wait_until(lock, time_point, predicate);
  *
  * wait_until 的行为：
+ * - wait_until 方法的作用是让当前线程在指定的时间点之前等待, 直到条件变量被通知或者超时
  * - 进入等待前会先检查 predicate() 的值.
- * - 如果 predicate() 在进入等待前立即为 true，则直接返回 true，不会进入等待状态
- * - 如果 predicate() 为 false，则进入等待状态，直到 time_point 到达
- * - 如果在 time_point 到达前 `notify_*` 被调用，并且此时 predicate() 为 true，则唤醒并返回 true
- * - 如果在 time_point 到达前 `notify_*` 被调用，但此时 predicate() 为 false，则继续等待(可能是虚假唤醒)
- * - 如果直到 time_point 到达时 predicate() 仍为 false，返回 false（表示超时）
+ * - 如果 predicate() 在进入等待前立即为 true, 则直接返回 true, 不会进入等待状态
+ * - 如果 predicate() 为 false, 则进入等待状态, 直到 time_point 到达
+ * - 如果在 time_point 到达前 `notify_*` 被调用, 并且此时 predicate() 为 true, 则唤醒并返回 true
+ * - 如果在 time_point 到达前 `notify_*` 被调用, 但此时 predicate() 为 false, 则继续等待(可能是虚假唤醒)
+ * - 如果直到 time_point 到达时 predicate() 仍为 false, 返回 false(表示超时)
  *
  * 简要来说：
  * - `wait_until` 返回 true 表示条件变量被唤醒并且条件成立
- * - `wait_until` 返回 false 表示已超时，且条件仍未满足（即超时触发任务）
+ * - `wait_until` 返回 false 表示已超时, 且条件仍未满足(即超时触发任务)
  */
 
+/// @brief 简单定时器类
 class SimpleTimer
 {
-  using clock = std::chrono::steady_clock;  // 单调时钟
+  using clock = std::chrono::steady_clock;  // 单调时钟, 不受系统时间变化影响
  public:
+  /// @brief 定时器状态
   enum class State : unsigned char
   {
     Stopped = 0,  // 停止
@@ -63,12 +83,16 @@ class SimpleTimer
     stop();
   }
 
+  /// @brief 启动定时器
+  /// @tparam Func 可调用对象类型
+  /// @param f 可调用对象, 定时器到期后执行的任务
+  /// @note 定时器会在新的线程中执行可调用对象 f
   template <typename Func>
   void start(Func&& f)
   {
     stop();                                        // 确保没有其他线程在运行(替换旧任务)
     state_ = State::Running;                       // 设置状态为运行中
-    auto task = std::move(std::forward<Func>(f));  // 完美转发后再 move，提高效率
+    auto task = std::move(std::forward<Func>(f));  // 完美转发后再 move, 提高效率
     // 使用 std::thread 创建一个新的线程来执行定时器任务
     thread_ = std::thread([this, task]() mutable {
       std::unique_lock<std::mutex> lock(mutex_);
@@ -106,11 +130,14 @@ class SimpleTimer
           break;
         }
 
-        next_time += interval_;  // 精确推进时间点，避免偏差
+        next_time += interval_;  // 精确推进时间点, 避免偏差
       }
     });
   }
 
+  /// @brief 重启定时器
+  /// @tparam Func 可调用对象类型
+  /// @param f 可调用对象, 定时器到期后执行的任务
   template <typename Func>
   void restart(Func&& f)
   {
@@ -118,6 +145,7 @@ class SimpleTimer
     start(std::forward<Func>(f));
   }
 
+  /// @brief 停止定时器, 定时器会等待当前任务执行完成后停止
   void stop()
   {
     state_ = State::Stopped;
@@ -131,7 +159,6 @@ class SimpleTimer
   /// @brief 暂停任务
   void pause()
   {
-    std::lock_guard<std::mutex> lock(mutex_);  // 虽然state_已经是atomic了, 但这里还是建议加锁保护
     if (state_ == State::Running)
     {
       state_ = State::Paused;
@@ -141,7 +168,6 @@ class SimpleTimer
   /// @brief 恢复任务
   void resume()
   {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (state_ == State::Paused)
     {
       state_ = State::Running;
@@ -156,7 +182,7 @@ class SimpleTimer
     return std::chrono::duration_cast<std::chrono::milliseconds>(interval_);
   }
 
-  /// @brief 设置新的定时器间隔
+  /// @brief 设置新的定时器间隔, 立即生效
   /// @param new_interval std::chrono::duration 定时器间隔
   template <typename Rep, typename Period>
   void set_interval(std::chrono::duration<Rep, Period> new_interval)
@@ -164,38 +190,38 @@ class SimpleTimer
     {
       std::lock_guard<std::mutex> lock(mutex_);
       interval_ = new_interval;
-      interval_changed_ = true;
+      interval_changed_ = true;  // 标记为已改变
     }
-    cv_.notify_all();  // 确保立即使用新的时间间隔
+    cv_.notify_all();  // 确保线程能获取到新的时间间隔
   }
 
-  /// @brief 设置新的定时器间隔
+  /// @brief 设置新的定时器间隔, 立即生效
   /// @param milliseconds 定时器间隔(毫秒)
   void set_interval(long long milliseconds)
   {
-    set_interval(std::chrono::milliseconds(milliseconds));  // 代理到主函数
+    set_interval(std::chrono::milliseconds(milliseconds));
   }
 
   /// @brief 获取定时器的当前状态
   /// @return State 定时器状态
   State state() const
   {
-    return state_;  // 返回定时器状态
+    return state_;
   }
   /// @brief 返回定时器是否在运行
   bool is_running() const
   {
-    return state_ == State::Running;  // 返回定时器是否在运行
+    return state_ == State::Running;
   }
-  /// @brief 获取定时器是否在暂停
+  /// @brief 返回定时器是否暂停
   bool is_paused() const
   {
-    return state_ == State::Paused;  // 返回定时器是否在暂停
+    return state_ == State::Paused;
   }
-  /// @brief 获取定时器是否在停止
+  /// @brief 返回定时器是否停止
   bool is_stopped() const
   {
-    return state_ == State::Stopped;  // 返回定时器是否在停止
+    return state_ == State::Stopped;
   }
 
  private:
@@ -205,8 +231,8 @@ class SimpleTimer
   bool one_shot_ = false;          // 是否只触发一次
   std::atomic<State> state_;       // 定时器状态
   std::thread thread_;             // 定时器线程
-  std::mutex mutex_;               // 互斥锁，确保线程安全
-  std::condition_variable cv_;     // 条件变量，用于暂停和恢复
+  std::mutex mutex_;               // 互斥锁, 确保线程安全
+  std::condition_variable cv_;     // 条件变量, 用于暂停和恢复
 };
 
 #endif  // SIMPLE_TIMER_H
