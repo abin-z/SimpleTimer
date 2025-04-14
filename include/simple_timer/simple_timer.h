@@ -75,20 +75,25 @@ class SimpleTimer
       auto next_time = clock::now() + interval_;
       while (true)
       {
+        if (state_ == State::Stopped)
+        {
+          break;
+        }
+
         while (state_ == State::Paused)
         {
           cv_.wait(lock, [this]() { return state_ != State::Paused; });
           next_time = clock::now() + interval_;  // 重新计算下一次触发时间
         }
 
-        if (state_ == State::Stopped)
+        if (cv_.wait_until(lock, next_time, [this]() { return state_ != State::Running || interval_changed_; }))
         {
-          break;
-        }
-
-        if (cv_.wait_until(lock, next_time, [this]() { return state_ != State::Running; }))
-        {
-          continue;  // 被唤醒或状态变了，不执行任务
+          if (interval_changed_)  // interval_修改后立即使用新间隔
+          {
+            next_time = clock::now() + interval_;
+            interval_changed_ = false;
+          }
+          continue;  // 若状态不是 Running, 继续循环判断; 若是 interval_ 被修改, 则更新 next_time 并立即跳过等待
         }
 
         lock.unlock();
@@ -144,6 +149,33 @@ class SimpleTimer
     }
   }
 
+  /// @brief 获取定时器的当前间隔
+  /// @return std::chrono::milliseconds 定时器间隔
+  std::chrono::milliseconds interval() const
+  {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(interval_);
+  }
+
+  /// @brief 设置新的定时器间隔
+  /// @param new_interval std::chrono::duration 定时器间隔
+  template <typename Rep, typename Period>
+  void set_interval(std::chrono::duration<Rep, Period> new_interval)
+  {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      interval_ = new_interval;
+      interval_changed_ = true;
+    }
+    cv_.notify_all();  // 确保立即使用新的时间间隔
+  }
+
+  /// @brief 设置新的定时器间隔
+  /// @param milliseconds 定时器间隔(毫秒)
+  void set_interval(long long milliseconds)
+  {
+    set_interval(std::chrono::milliseconds(milliseconds));  // 代理到主函数
+  }
+
   /// @brief 获取定时器的当前状态
   /// @return State 定时器状态
   State state() const
@@ -166,40 +198,15 @@ class SimpleTimer
     return state_ == State::Stopped;  // 返回定时器是否在停止
   }
 
-  /// @brief 获取定时器的当前间隔
-  /// @return std::chrono::milliseconds 定时器间隔
-  std::chrono::milliseconds interval() const
-  {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(interval_);
-  }
-
-  /// @brief 设置新的定时器间隔
-  /// @param new_interval std::chrono::duration 定时器间隔
-  template <typename Rep, typename Period>
-  void set_interval(std::chrono::duration<Rep, Period> new_interval)
-  {
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      interval_ = new_interval;
-    }
-    cv_.notify_all();  // 确保等待时间更新
-  }
-
-  /// @brief 设置新的定时器间隔
-  /// @param milliseconds 定时器间隔(毫秒)
-  void set_interval(long long milliseconds)
-  {
-    set_interval(std::chrono::milliseconds(milliseconds));  // 代理到主函数
-  }
-
  private:
   // 定时器间隔, 默认10秒
   clock::duration interval_ = std::chrono::seconds(10);
-  bool one_shot_ = false;       // 是否只触发一次
-  std::atomic<State> state_;    // 定时器状态
-  std::thread thread_;          // 定时器线程
-  std::mutex mutex_;            // 互斥锁，确保线程安全
-  std::condition_variable cv_;  // 条件变量，用于暂停和恢复
+  bool interval_changed_ = false;  // 时间间隔是否被修改过
+  bool one_shot_ = false;          // 是否只触发一次
+  std::atomic<State> state_;       // 定时器状态
+  std::thread thread_;             // 定时器线程
+  std::mutex mutex_;               // 互斥锁，确保线程安全
+  std::condition_variable cv_;     // 条件变量，用于暂停和恢复
 };
 
 #endif  // SIMPLE_TIMER_H
