@@ -72,11 +72,13 @@ class SimpleTimer
     // 使用 std::thread 创建一个新的线程来执行定时器任务
     thread_ = std::thread([this, task]() mutable {
       std::unique_lock<std::mutex> lock(mutex_);
+      auto next_time = clock::now() + interval_;
       while (true)
       {
         while (state_ == State::Paused)
         {
           cv_.wait(lock, [this]() { return state_ != State::Paused; });
+          next_time = clock::now() + interval_;  // 重新计算下一次触发时间
         }
 
         if (state_ == State::Stopped)
@@ -84,14 +86,13 @@ class SimpleTimer
           break;
         }
 
-        auto current_interval = interval_;
-        if (cv_.wait_for(lock, current_interval, [this]() { return state_ != State::Running; }))
+        if (cv_.wait_until(lock, next_time, [this]() { return state_ != State::Running; }))
         {
-          continue;  // 被唤醒，检查状态
+          continue;  // 被唤醒或状态变了，不执行任务
         }
 
-        lock.unlock();  // 解锁执行任务
-        task();
+        lock.unlock();
+        task();  // 执行任务
         lock.lock();
 
         if (one_shot_)
@@ -99,6 +100,8 @@ class SimpleTimer
           state_ = State::Stopped;
           break;
         }
+
+        next_time += interval_;  // 精确推进时间点，避免偏差
       }
     });
   }
