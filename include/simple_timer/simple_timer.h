@@ -106,6 +106,13 @@ class SimpleTimer
     });
   }
 
+  template <typename Func>
+  void restart(Func&& f)
+  {
+    stop();
+    start(std::forward<Func>(f));
+  }
+
   void stop()
   {
     state_ = State::Stopped;

@@ -18,11 +18,12 @@ int main()
   timer.pause();
   std::cout << "Pausing timer..." << std::endl;
 
-  // 等待 2 秒后恢复定时器
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  // 等待 3 秒后恢复定时器
+  std::this_thread::sleep_for(std::chrono::seconds(3));
   timer.resume();
   std::cout << "Resuming timer..." << std::endl;
 
   // 等待定时器执行完成
   std::this_thread::sleep_for(std::chrono::seconds(5));
+  timer.stop();
 }
