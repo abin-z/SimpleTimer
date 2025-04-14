@@ -7,6 +7,22 @@
 #include <mutex>
 #include <thread>
 
+/**
+ * cv.wait_until(lock, time_point, predicate);
+ *
+ * wait_until 的行为：
+ * - 进入等待前会先检查 predicate() 的值.
+ * - 如果 predicate() 在进入等待前立即为 true，则直接返回 true，不会进入等待状态
+ * - 如果 predicate() 为 false，则进入等待状态，直到 time_point 到达
+ * - 如果在 time_point 到达前 `notify_*` 被调用，并且此时 predicate() 为 true，则唤醒并返回 true
+ * - 如果在 time_point 到达前 `notify_*` 被调用，但此时 predicate() 为 false，则继续等待(可能是虚假唤醒)
+ * - 如果直到 time_point 到达时 predicate() 仍为 false，返回 false（表示超时）
+ *
+ * 简要来说：
+ * - `wait_until` 返回 true 表示条件变量被唤醒并且条件成立
+ * - `wait_until` 返回 false 表示已超时，且条件仍未满足（即超时触发任务）
+ */
+
 class SimpleTimer
 {
   using clock = std::chrono::steady_clock;  // 单调时钟
@@ -56,40 +72,33 @@ class SimpleTimer
     // 使用 std::thread 创建一个新的线程来执行定时器任务
     thread_ = std::thread([this, task]() mutable {
       std::unique_lock<std::mutex> lock(mutex_);
-      auto next_time = clock::now() + interval_;  // 计算下次执行时间
-      while (state_ == State::Running)            // 主循环，只要定时器处于运行状态就持续循环
+      while (true)
       {
-        /**
-         * cv.wait_until(lock, time_point, predicate);
-         *
-         * wait_until 的行为：
-         * - 进入等待前会先检查 predicate() 的值.
-         * - 如果 predicate() 在进入等待前立即为 true，则直接返回 true，不会进入等待状态
-         * - 如果 predicate() 为 false，则进入等待状态，直到 time_point 到达
-         * - 如果在 time_point 到达前 `notify_*` 被调用，并且此时 predicate() 为 true，则唤醒并返回 true
-         * - 如果在 time_point 到达前 `notify_*` 被调用，但此时 predicate() 为 false，则继续等待(可能是虚假唤醒)
-         * - 如果直到 time_point 到达时 predicate() 仍为 false，返回 false（表示超时）
-         *
-         * 简要来说：
-         * - `wait_until` 返回 true 表示条件变量被唤醒并且条件成立（即 `running_ == false`）
-         * - `wait_until` 返回 false 表示已超时，且条件仍未满足（即超时触发任务）
-         *
-         * 在定时器场景下：
-         * - 当调用 stop() 或 pause() 时，`state_` 被设置为非 `State::Running`，并通过 `notify_all()` 唤醒等待线程。
-         * - 如果 `state_ != State::Running`，则 `wait_until` 会返回 true，跳出循环。
-         * - 如果超时未达到条件，`wait_until` 会返回 false，触发定时器任务。
-         */
-        if (cv_.wait_until(lock, next_time, [this]() { return state_ != State::Running; }))
+        while (state_ == State::Paused)
         {
-          break;  // 条件变量被唤醒，且检查到 `state_ != State::Running`，退出循环
+          cv_.wait(lock, [this]() { return state_ != State::Paused; });
         }
-        task();  // 执行任务
-        if (one_shot_)
+
+        if (state_ == State::Stopped)
         {
-          state_ = State::Stopped;  // 如果是单次定时器，停止运行
           break;
         }
-        next_time += interval_;  // 更新下次执行时间
+
+        auto current_interval = interval_;
+        if (cv_.wait_for(lock, current_interval, [this]() { return state_ != State::Running; }))
+        {
+          continue;  // 被唤醒，检查状态
+        }
+
+        lock.unlock();  // 解锁执行任务
+        task();
+        lock.lock();
+
+        if (one_shot_)
+        {
+          state_ = State::Stopped;
+          break;
+        }
       }
     });
   }
@@ -104,23 +113,26 @@ class SimpleTimer
     }
   }
 
-  // void pause()
-  // {
-  //   if (state_ == State::Running)
-  //   {
-  //     state_ = State::Paused;
-  //   }
-  // }
+  /// @brief 暂停任务
+  void pause()
+  {
+    std::lock_guard<std::mutex> lock(mutex_);  // 虽然state_已经是atomic了, 但这里还是建议加锁保护
+    if (state_ == State::Running)
+    {
+      state_ = State::Paused;
+    }
+  }
 
-  // /// @brief TODO 存在问题, 无法唤醒
-  // void resume()
-  // {
-  //   if (state_ == State::Paused)
-  //   {
-  //     state_ = State::Running;
-  //     cv_.notify_all();  // 唤醒正在等待的线程
-  //   }
-  // }
+  /// @brief 恢复任务
+  void resume()
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (state_ == State::Paused)
+    {
+      state_ = State::Running;
+      cv_.notify_all();  // 唤醒正在等待的线程
+    }
+  }
 
   /// @brief 获取定时器的当前状态
   /// @return State 定时器状态
@@ -156,8 +168,11 @@ class SimpleTimer
   template <typename Rep, typename Period>
   void set_interval(std::chrono::duration<Rep, Period> new_interval)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    interval_ = new_interval;  // 更新定时器间隔
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      interval_ = new_interval;
+    }
+    cv_.notify_all();  // 确保等待时间更新
   }
 
   /// @brief 设置新的定时器间隔
