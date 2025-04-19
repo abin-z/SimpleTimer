@@ -160,7 +160,6 @@ class SimpleTimer
   /// @brief 停止定时器, 定时器会等待当前任务执行完成后停止
   void stop()
   {
-    if (state_ == State::Stopped) return;
     state_ = State::Stopped;
     cv_.notify_all();  // 唤醒等待的线程
     if (thread_.joinable())
