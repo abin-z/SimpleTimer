@@ -69,10 +69,6 @@ timer.resume();  // Resume the timer
 You can change the timer interval dynamically:
 
 ```cpp
-cpp
-
-
-CopyEdit
 timer.set_interval(std::chrono::seconds(2));  // Set new interval to 2 seconds
 ```
 
@@ -81,10 +77,6 @@ timer.set_interval(std::chrono::seconds(2));  // Set new interval to 2 seconds
 Use `stop` to stop the timer. It will wait for the current task to finish before stopping (blocking call):
 
 ```cpp
-cpp
-
-
-CopyEdit
 timer.stop();  // Stop the timer
 ```
 
