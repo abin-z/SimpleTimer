@@ -1,5 +1,9 @@
 # SimpleTimer — A Lightweight Timer
 
+[![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer) [![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h) [![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170) [![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT) [![version](https://img.shields.io/badge/version-0.9.0-green)](https://github.com/abin-z/SimpleTimer/releases)
+
+🌍 Languages/语言:  [English](README.md)  |  [简体中文](README.zh-CN.md)
+
 **SimpleTimer** is a lightweight C++11 timer class that runs tasks periodically in a background thread. It is suitable for scenarios requiring scheduled task execution. It supports features like pause, resume, interval adjustment, and more — all without relying on any third-party libraries, using only the C++11 standard library.
 
 ## Features

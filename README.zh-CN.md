@@ -1,5 +1,9 @@
 # SimpleTimer  一个简单的定时器
 
+[![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer) [![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h) [![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170) [![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT) [![version](https://img.shields.io/badge/version-0.9.0-green)](https://github.com/abin-z/SimpleTimer/releases)
+
+🌍 Languages/语言:  [English](README.md)  |  [简体中文](README.zh-CN.md)
+
 `SimpleTimer` 是一个简易的定时器类，支持在后台线程中定期执行任务，适用于需要定时执行任务的场景。它支持暂停、恢复、修改时间间隔等功能，且不依赖于任何第三方库，仅依赖 C++11 标准库。
 
 ## 特性
@@ -14,7 +18,11 @@
 
 ## 使用方式
 
-将 [`simple_timer.h`](include/simple_timer/simple_timer.h) 文件复制到你的项目目录中。然后在源码文件中`#include "simple_timer.h"`即可使用.
+将 [`simple_timer.h`](include/simple_timer/simple_timer.h) 文件复制到你的项目目录中。然后在源码文件中引入即可使用:
+
+```cpp
+#include "simple_timer.h"
+```
 
 > 因为`std::thread`在 POSIX 系统下使用`pthread`实现的, 所以在POSIX 系统下需要链接 `pthread` 库(例如 `-lpthread`)。
 
