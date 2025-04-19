@@ -1,4 +1,4 @@
-# SimpleTimer  一个简单的Header-only定时器
+# SimpleTimer  一个简单的定时器
 
 `SimpleTimer` 是一个简易的定时器类，支持在后台线程中定期执行任务，适用于需要定时执行任务的场景。它支持暂停、恢复、修改时间间隔等功能，且不依赖于任何第三方库，仅依赖 C++11 标准库。
 
@@ -12,11 +12,11 @@
 - `SimpleTimer`类对象在析构时会自动停止定时器，忘记`stop`也确保资源的正确释放。
 - 不依赖任何第三方库，除非是 POSIX 系统下需要链接 `pthread` 库。
 
-## 使用方法
+## 使用方式
 
-`SimpleTimer` 只有一个头文件， 且只依赖于 C++11 标准库，因此你只需在支持 C++11 的编译器上编译即可。无须额外安装任何依赖。
+将 [`simple_timer.h`](include/simple_timer/simple_timer.h) 文件复制到你的项目目录中。然后在源码文件中`#include "simple_timer.h"`即可使用.
 
-> 因为`std::thread`在 POSIX 系统下使用`pthread`实现的, 所以在POSIX 系统下需要链接 `pthread` 库。
+> 因为`std::thread`在 POSIX 系统下使用`pthread`实现的, 所以在POSIX 系统下需要链接 `pthread` 库(例如 `-lpthread`)。
 
 ## 基础接口
 
@@ -144,7 +144,7 @@ int main() {
 ## 注意事项
 
 - 定时器的精度取决于系统时钟的精度，通常为毫秒级别。
-- 在使用 `std::thread` 创建新线程时，在传入的可调用对象内考虑是否需要保护共享资源.
+- 在使用 `std::thread` 创建新线程时，在传入的可调用对象内考虑是否需要保护共享资源。
 
 ## 许可证
 
