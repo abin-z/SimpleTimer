@@ -73,7 +73,7 @@ TEST_CASE("SimpleTimer updates interval immediately", "[SimpleTimer]")
   timer.start([&]() { counter++; });
 
   std::this_thread::sleep_for(milliseconds(210));  // 应该触发两次
-  timer.set_interval(milliseconds(30));           // 修改为30ms
+  timer.set_interval(milliseconds(30));            // 修改为30ms
 
   std::this_thread::sleep_for(milliseconds(100));  // 应该再触发至少3次
   timer.stop();

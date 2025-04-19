@@ -31,7 +31,7 @@
  * 函数原型:
  * cv.wait_until(lock, time_point, predicate);
  *
- * wait_until 的行为：
+ * wait_until 的行为:
  * - wait_until 方法的作用是让当前线程在指定的时间点之前等待, 直到条件变量被通知或者超时
  * - 进入等待前会先检查 predicate() 的值.
  * - 如果 predicate() 在进入等待前立即为 true, 则直接返回 true, 不会进入等待状态
@@ -40,7 +40,7 @@
  * - 如果在 time_point 到达前 `notify_*` 被调用, 但此时 predicate() 为 false, 则继续等待(可能是虚假唤醒)
  * - 如果直到 time_point 到达时 predicate() 仍为 false, 返回 false(表示超时)
  *
- * 简要来说：
+ * 简要来说:
  * - `wait_until` 返回 true 表示条件变量被唤醒并且条件成立
  * - `wait_until` 返回 false 表示已超时, 且条件仍未满足(即超时触发任务)
  */
@@ -160,6 +160,7 @@ class SimpleTimer
   /// @brief 停止定时器, 定时器会等待当前任务执行完成后停止
   void stop()
   {
+    if (state_ == State::Stopped) return;
     state_ = State::Stopped;
     cv_.notify_all();  // 唤醒等待的线程
     if (thread_.joinable())
