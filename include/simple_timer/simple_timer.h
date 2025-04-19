@@ -1,15 +1,21 @@
 /**
  * @file: simple_timer.h
  * @version: v0.9.0
- * @description: 一个简单易用的定时器, 适合于需要定时执行任务的场景, 支持暂停/恢复/修改时间间隔等功能.
- * - 特性:
- *    - 该定时器使用 std::thread 和 std::condition_variable 实现, 线程安全
- *    - 默认 std::chrono::duration 作为时间间隔, 可以使用任意时间单位(秒/毫秒/微秒/纳秒)
- *    - 定时器启动后, 可调用对象会在新的线程中执行, 不会阻塞主线程
- *    - 允许单次和重复执行, 支持暂停/恢复/重启定时器, 支持修改定时器间隔
- *    - 该定时器的时间精度取决于系统时钟的精度,通常为毫秒级别
- *    - SimpleTimer 类的析构函数会自动停止定时器, 确保资源的正确释放
- *    - 该定时器只使用了 C++11 标准库, 除了POSIX系统下使用 pthread 库外, 不依赖任何第三方库
+ * @description: A simple and easy-to-use timer, suitable for scenarios where periodic task execution is required.
+ *               Supports pause/resume/modifying the interval and more.
+ *
+ * - Features:
+ *    - Cross-platform: Works on multiple platforms (Windows, Linux, macOS) using the C++11 standard library.
+ *    - Thread-safe: Built with `std::thread` and `std::condition_variable`.
+ *    - Flexible Intervals: Uses `std::chrono::duration` for time intervals, supporting any time unit (minutes, seconds,
+ *      milliseconds, etc.).
+ *    - Execution Modes: Supports both one-shot (single execution) and periodic execution modes.
+ *    - Control: Provides capabilities to pause, resume, restart, and dynamically modify the interval of the timer.
+ *    - Timer Precision: The timer’s precision is dependent on the system clock, typically millisecond precision.
+ *    - Automatic Cleanup: `SimpleTimer` objects automatically stop the timer on destruction, ensuring proper resource
+ *      cleanup even if `stop` is not explicitly called.
+ *    - Minimal Dependencies: No third-party libraries required, except for POSIX systems, where the `pthread` library
+ *      must be linked.
  *
  * @author: abin
  * @date: 2025-04-12
