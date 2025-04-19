@@ -4,17 +4,18 @@
 
 🌍 Languages/语言:  [English](README.md)  |  [简体中文](README.zh-CN.md)
 
-**SimpleTimer** is a lightweight C++11 timer class that runs tasks periodically in a background thread. It is suitable for scenarios requiring scheduled task execution. It supports features like pause, resume, interval adjustment, and more — all without relying on any third-party libraries, using only the C++11 standard library.
+**SimpleTimer** is a cross-platform, lightweight C++11 timer class designed to run tasks periodically in a background thread. It is suitable for scenarios where scheduled task execution is needed. The class supports pause, resume, interval adjustment, and more, all without relying on any third-party libraries (only the C++11 standard library).
 
 ## Features
 
-- Thread-safe implementation using `std::thread` and `std::condition_variable`
-- Uses `std::chrono::duration` for flexible time intervals (supports minutes, seconds, milliseconds, microseconds, nanoseconds, etc.)
-- Supports one-shot (single execution) and periodic execution modes
-- Allows pausing, resuming, restarting the timer, and updating the interval dynamically
-- Timer accuracy depends on the system clock, typically at the millisecond level
-- Automatically stops and releases resources upon destruction, even if `stop` is not explicitly called
-- No third-party dependencies (on POSIX systems, linking with `pthread` is required)
+- **Cross-platform**: Works on multiple platforms (Windows, Linux, macOS) using the C++11 standard library.
+- **Thread-safe**: Built with `std::thread` and `std::condition_variable`.
+- **Flexible Intervals**: Uses `std::chrono::duration` for time intervals, supporting any time unit (minutes, seconds, milliseconds, etc.).
+- **Execution Modes**: Supports both one-shot (single execution) and periodic execution modes.
+- **Control**: Provides capabilities to pause, resume, restart, and dynamically modify the interval of the timer.
+- **Timer Precision**: The timer’s precision is dependent on the system clock, typically millisecond precision.
+- **Automatic Cleanup**: `SimpleTimer` objects automatically stop the timer on destruction, ensuring proper resource cleanup even if `stop` is not explicitly called.
+- **Minimal Dependencies**: No third-party libraries required, except for POSIX systems, where the `pthread` library must be linked.
 
 ## Getting Started
 

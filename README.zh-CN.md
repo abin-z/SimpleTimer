@@ -1,30 +1,30 @@
-# SimpleTimer  一个简单的定时器
+# SimpleTimer  一个跨平台的轻量级定时器
 
 [![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer) [![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h) [![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170) [![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT) [![version](https://img.shields.io/badge/version-0.9.0-green)](https://github.com/abin-z/SimpleTimer/releases)
 
 🌍 Languages/语言:  [English](README.md)  |  [简体中文](README.zh-CN.md)
 
-`SimpleTimer` 是一个简易的定时器类，支持在后台线程中定期执行任务，适用于需要定时执行任务的场景。它支持暂停、恢复、修改时间间隔等功能，且不依赖于任何第三方库，仅依赖 C++11 标准库。
+**SimpleTimer** 是一个跨平台的轻量级定时器类，支持在后台线程中定期执行任务，适用于需要定时执行任务的场景。它支持暂停、恢复、修改时间间隔等功能，且不依赖任何第三方库，仅使用 C++11 标准库实现。
 
 ## 特性
 
-- 使用 `std::thread` 和 `std::condition_variable` 实现，线程安全。
-- 默认使用 `std::chrono::duration` 作为时间间隔，可以支持任意时间单位（分钟、秒、毫秒、微秒、纳秒等）。
-- 支持单次执行（one-shot）和重复执行（周期性）。
-- 支持暂停、恢复、重启定时器，支持修改时间间隔。
-- 定时器的时间精度取决于系统时钟的精度，通常为毫秒级别。
-- `SimpleTimer`类对象在析构时会自动停止定时器，忘记`stop`也确保资源的正确释放。
-- 不依赖任何第三方库，除非是 POSIX 系统下需要链接 `pthread` 库。
+- **跨平台支持**：在多个平台上（如 Windows、Linux、macOS）均可运行，基于 C++11 标准库实现。
+- **线程安全**：内部使用 `std::thread` 和 `std::condition_variable`，保证线程安全。
+- **灵活的时间间隔**：支持使用 `std::chrono::duration` 设置任意时间单位（分钟、秒、毫秒等）。
+- **支持多种执行模式**：包括单次执行（one-shot）和重复执行（周期性）。
+- **控制功能完善**：支持暂停、恢复、重启定时器，支持动态修改时间间隔。
+- **时间精度良好**：定时器精度取决于系统时钟，通常为毫秒级别。
+- **自动资源管理**：`SimpleTimer` 对象析构时会自动停止定时器，即使忘记调用 `stop` 也能确保资源正确释放。
 
 ## 使用方式
 
-将 [`simple_timer.h`](include/simple_timer/simple_timer.h) 文件复制到你的项目目录中。然后在源码文件中引入即可使用:
+将 [`simple_timer.h`](include/simple_timer/simple_timer.h) 文件复制到你的项目目录中，在源码中引入即可使用:
 
 ```cpp
 #include "simple_timer.h"
 ```
 
-> 因为`std::thread`在 POSIX 系统下使用`pthread`实现的, 所以在POSIX 系统下需要链接 `pthread` 库(例如 `-lpthread`)。
+> 在 POSIX 系统（如 Linux、macOS）中，`std::thread` 基于 `pthread` 实现，因此需要在编译时加上 `-lpthread` 链接选项。
 
 ## 基础接口
 
