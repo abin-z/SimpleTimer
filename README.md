@@ -158,6 +158,10 @@ int main() {
 }
 ```
 
+## More Usage Examples
+
+Want to schedule a function with parameters? No problem! Check out more usage examples in the [examples](examples) folder.
+
 ## Notes
 
 - Timer accuracy depends on the system clock, typically accurate to the millisecond.
