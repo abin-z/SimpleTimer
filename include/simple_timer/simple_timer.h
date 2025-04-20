@@ -29,6 +29,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
 #include <mutex>
 #include <thread>
 
@@ -139,7 +140,21 @@ class SimpleTimer
         }
 
         lock.unlock();
-        task();  // 执行任务
+        // Timer 内部处理异常, 执行task遇到异常后直接停止timer
+        try
+        {
+          task();  // 执行任务
+        }
+        catch (const std::exception& e)
+        {
+          state_ = State::Stopped;  // 出现异常时停止定时器 (不能调用stop()会死锁)
+          std::fprintf(stderr, "[SimpleTimer] Exception: %s\n", e.what());
+        }
+        catch (...)
+        {
+          state_ = State::Stopped;  // 出现异常时停止定时器
+          std::fprintf(stderr, "[SimpleTimer] Unknown exception occurred.\n");
+        }
         lock.lock();
 
         if (one_shot_)

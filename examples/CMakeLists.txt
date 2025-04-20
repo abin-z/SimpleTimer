@@ -12,3 +12,6 @@ target_link_libraries(timer_one_shot PRIVATE simple_timer)
 
 add_executable(timer_callable timer_callable.cpp)
 target_link_libraries(timer_callable PRIVATE simple_timer)
+
+add_executable(timer_task_error timer_task_error.cpp)
+target_link_libraries(timer_task_error PRIVATE simple_timer)
