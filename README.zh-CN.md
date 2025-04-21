@@ -33,15 +33,19 @@
 定时器可以使用不同的构造函数来创建，支持多种间隔和触发方式。
 
 ```cpp
-// 默认构造函数，默认间隔为10秒
-SimpleTimer timer;
+#include "simple_timer.h"
+int main()
+{
+  // 默认构造函数，默认间隔为10秒
+  SimpleTimer timer;
 
-// 使用 std::chrono::duration 设置定时器间隔
-SimpleTimer timer(std::chrono::seconds(1));          // 1秒执行一次
-SimpleTimer timer(std::chrono::seconds(5), true);    // 5秒，单次执行
+  // 使用 std::chrono::duration 设置定时器间隔
+  SimpleTimer timer(std::chrono::seconds(1));          // 1秒执行一次
+  SimpleTimer timer(std::chrono::seconds(5), true);    // 5秒，单次执行
 
-// 使用毫秒为单位设置定时器间隔
-SimpleTimer timer(1000LL);  // 间隔1000毫秒
+  // 使用毫秒为单位设置定时器间隔
+  SimpleTimer timer(1000LL);  // 间隔1000毫秒
+}
 ```
 
 ### 启动定时器
@@ -49,9 +53,15 @@ SimpleTimer timer(1000LL);  // 间隔1000毫秒
 调用 `start` 方法并传入一个可调用对象，定时器将在新的线程中定期执行该任务。
 
 ```cpp
-timer.start([]() {
-    std::cout << "定时器任务执行！" << std::endl;
-});
+#include "simple_timer.h"
+int main()
+{
+  // 默认构造函数，默认间隔为10秒
+  SimpleTimer timer;
+  timer.start([]() {
+      std::cout << "定时器任务执行！" << std::endl;
+  });
+}
 ```
 
 ### 暂停与恢复定时器
@@ -59,8 +69,14 @@ timer.start([]() {
 定时器支持在运行时暂停与恢复。
 
 ```cpp
-timer.pause();  // 暂停定时器
-timer.resume(); // 恢复定时器
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  timer.start(task);
+  timer.pause();  // 暂停定时器
+  timer.resume(); // 恢复定时器
+}
 ```
 
 ### 设置定时器间隔
@@ -68,7 +84,13 @@ timer.resume(); // 恢复定时器
 可以动态修改定时器的间隔。
 
 ```cpp
-timer.set_interval(std::chrono::seconds(2));  // 设置新间隔为2秒
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));   // 1秒执行一次
+  timer.start(task);
+  timer.set_interval(std::chrono::seconds(2));  // 设置新间隔为2秒
+}
 ```
 
 ### 停止定时器
@@ -76,7 +98,13 @@ timer.set_interval(std::chrono::seconds(2));  // 设置新间隔为2秒
 调用 `stop` 方法可以停止定时器。定时器会等当前任务执行完成后停止(阻塞)。
 
 ```cpp
-timer.stop();  // 停止定时器
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  timer.start(task);
+  timer.stop();  // 停止定时器
+}
 ```
 
 ### 重启定时器
@@ -84,9 +112,15 @@ timer.stop();  // 停止定时器
 调用 `restart` 方法可以重启定时器并设置新的任务。
 
 ```cpp
-timer.restart([]() {
-    std::cout << "定时器重启，任务执行！" << std::endl;
-});
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  timer.start(task);
+  timer.restart([]() {
+      std::cout << "定时器重启，任务执行！" << std::endl;
+  });
+}
 ```
 
 ### 获取定时器状态
@@ -94,8 +128,14 @@ timer.restart([]() {
 可以查询定时器当前的状态。
 
 ```cpp
-if (timer.is_running()) {
-    std::cout << "定时器正在运行中！" << std::endl;
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  timer.start(task);
+  if (timer.is_running()) {
+      std::cout << "定时器正在运行中！" << std::endl;
+  }
 }
 ```
 
@@ -110,8 +150,14 @@ if (timer.is_running()) {
 可以通过 `state()` 方法查询当前状态。
 
 ```cpp
-if (timer.state() == SimpleTimer::State::Running) {
-    std::cout << "定时器正在运行！" << std::endl;
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  timer.start(task);
+  if (timer.state() == SimpleTimer::State::Running) {
+      std::cout << "定时器正在运行！" << std::endl;
+  }
 }
 ```
 
