@@ -56,8 +56,7 @@ int main()
 #include "simple_timer.h"
 int main()
 {
-  // 默认构造函数，默认间隔为10秒
-  SimpleTimer timer;
+  SimpleTimer timer(std::chrono::seconds(1));
   timer.start([]() {
       std::cout << "定时器任务执行！" << std::endl;
   });
@@ -72,7 +71,7 @@ int main()
 #include "simple_timer.h"
 int main()
 {
-  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  SimpleTimer timer(std::chrono::seconds(1));
   timer.start(task);
   timer.pause();   // 暂停定时器
   timer.resume();  // 恢复定时器
@@ -114,7 +113,7 @@ int main()
 #include "simple_timer.h"
 int main()
 {
-  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  SimpleTimer timer(std::chrono::seconds(1));
   timer.start(task);
   timer.stop();  // 停止定时器
 }
@@ -128,7 +127,7 @@ int main()
 #include "simple_timer.h"
 int main()
 {
-  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  SimpleTimer timer(std::chrono::seconds(1));
   timer.start(task);
   timer.restart([]() {
       std::cout << "定时器重启，任务执行！" << std::endl;
@@ -144,7 +143,7 @@ int main()
 #include "simple_timer.h"
 int main()
 {
-  SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
+  SimpleTimer timer(std::chrono::seconds(1));
   timer.start(task);
   if (timer.is_running()) {
       std::cout << "定时器正在运行中！" << std::endl;

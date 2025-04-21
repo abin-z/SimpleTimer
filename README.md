@@ -57,6 +57,7 @@ Call `start` with a callable (e.g., lambda) to begin periodic execution in a new
 #include "simple_timer.h"
 int main()
 {
+  SimpleTimer timer(std::chrono::seconds(1));
   timer.start([]() {
       std::cout << "Timer task executed!" << std::endl;
   });
