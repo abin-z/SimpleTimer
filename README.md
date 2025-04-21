@@ -1,6 +1,6 @@
 # SimpleTimer — A Lightweight Timer
 
-[![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer) [![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h) [![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170) [![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT) [![version](https://img.shields.io/badge/version-0.9.0-green)](https://github.com/abin-z/SimpleTimer/releases)
+[![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer) [![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h) [![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170) [![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT) [![version](https://img.shields.io/badge/version-0.9.1-green)](https://github.com/abin-z/SimpleTimer/releases)
 
 🌍 Languages/语言:  [English](README.md)  |  [简体中文](README.zh-CN.md)
 
@@ -34,15 +34,19 @@ Copy the [`simple_timer.h`](include/simple_timer/simple_timer.h) file into your 
 You can create a timer with different constructors to configure the interval and mode of execution:
 
 ```cpp
-// Default constructor, with a default interval of 10 seconds
-SimpleTimer timer;
+#include "simple_timer.h"
+int main()
+{
+  // Default constructor, with a default interval of 10 seconds
+  SimpleTimer timer;
 
-// Set timer interval using std::chrono::duration
-SimpleTimer timer(std::chrono::seconds(1));          // Executes every 1 second
-SimpleTimer timer(std::chrono::seconds(5), true);    // One-shot, fires after 5 seconds
+  // Set timer interval using std::chrono::duration
+  SimpleTimer timer(std::chrono::seconds(1));          // Executes every 1 second
+  SimpleTimer timer(std::chrono::seconds(5), true);    // One-shot, fires after 5 seconds
 
-// Set interval in milliseconds directly
-SimpleTimer timer(1000LL);  // Interval: 1000 milliseconds
+  // Set interval in milliseconds directly
+  SimpleTimer timer(1000LL);  // Interval: 1000 milliseconds
+}
 ```
 
 ### Starting the Timer
@@ -50,9 +54,13 @@ SimpleTimer timer(1000LL);  // Interval: 1000 milliseconds
 Call `start` with a callable (e.g., lambda) to begin periodic execution in a new thread:
 
 ```cpp
-timer.start([]() {
-    std::cout << "Timer task executed!" << std::endl;
-});
+#include "simple_timer.h"
+int main()
+{
+  timer.start([]() {
+      std::cout << "Timer task executed!" << std::endl;
+  });
+}
 ```
 
 ### Pausing and Resuming the Timer
@@ -60,8 +68,27 @@ timer.start([]() {
 You can pause and resume the timer while it’s running:
 
 ```cpp
-timer.pause();   // Pause the timer
-timer.resume();  // Resume the timer
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));
+  timer.start(task);
+  timer.pause();   // Pause the timer
+  timer.resume();  // Resume the timer
+}
+```
+
+### Set One-Shot Execution
+
+The timer can be configured for one-shot execution, meaning it will only run once.
+
+```cpp
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(5), true);  // One-shot execution: 5-second interval
+  timer.start(task);  // Executes 'task' after 5 seconds, does not repeat
+}
 ```
 
 ### Changing the Timer Interval
@@ -69,7 +96,13 @@ timer.resume();  // Resume the timer
 You can change the timer interval dynamically:
 
 ```cpp
-timer.set_interval(std::chrono::seconds(2));  // Set new interval to 2 seconds
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));   // 1-second interval
+  timer.start(task);
+  timer.set_interval(std::chrono::seconds(2));  // Set new interval to 2 seconds
+}
 ```
 
 ### Stopping the Timer
@@ -77,7 +110,13 @@ timer.set_interval(std::chrono::seconds(2));  // Set new interval to 2 seconds
 Use `stop` to stop the timer. It will wait for the current task to finish before stopping (blocking call):
 
 ```cpp
-timer.stop();  // Stop the timer
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));
+  timer.start(task);
+  timer.stop();  // Stop the timer
+}
 ```
 
 ### Restarting the Timer
@@ -85,9 +124,15 @@ timer.stop();  // Stop the timer
 Use `restart` to restart the timer with a new task:
 
 ```cpp
-timer.restart([]() {
-    std::cout << "Timer restarted and task executed!" << std::endl;
-});
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));
+  timer.start(task);
+  timer.restart([]() {
+      std::cout << "Timer restarted and task executed!" << std::endl;
+  });
+}
 ```
 
 ### Checking Timer Status
@@ -95,8 +140,14 @@ timer.restart([]() {
 You can query the timer's current status:
 
 ```cpp
-if (timer.is_running()) {
-    std::cout << "The timer is currently running!" << std::endl;
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));
+  timer.start(task);
+  if (timer.is_running()) {
+      std::cout << "The timer is currently running!" << std::endl;
+  }
 }
 ```
 
@@ -111,8 +162,14 @@ The `SimpleTimer` class defines three possible states:
 Use the `state()` method to check the current state:
 
 ```cpp
-if (timer.state() == SimpleTimer::State::Running) {
-    std::cout << "Timer is running!" << std::endl;
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(1));
+  timer.start(task);
+  if (timer.state() == SimpleTimer::State::Running) {
+      std::cout << "Timer is running!" << std::endl;
+  }
 }
 ```
 

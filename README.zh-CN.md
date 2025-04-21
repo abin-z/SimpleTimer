@@ -1,6 +1,6 @@
 # SimpleTimer  一个跨平台的轻量级定时器
 
-[![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer) [![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h) [![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170) [![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT) [![version](https://img.shields.io/badge/version-0.9.0-green)](https://github.com/abin-z/SimpleTimer/releases)
+[![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer) [![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h) [![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170) [![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT) [![version](https://img.shields.io/badge/version-0.9.1-green)](https://github.com/abin-z/SimpleTimer/releases)
 
 🌍 Languages/语言:  [English](README.md)  |  [简体中文](README.zh-CN.md)
 
@@ -74,8 +74,21 @@ int main()
 {
   SimpleTimer timer(std::chrono::seconds(1));  // 1秒执行一次
   timer.start(task);
-  timer.pause();  // 暂停定时器
-  timer.resume(); // 恢复定时器
+  timer.pause();   // 暂停定时器
+  timer.resume();  // 恢复定时器
+}
+```
+
+### 设置单次执行
+
+定时器可设置单次执行，只会执行一次。
+
+```cpp
+#include "simple_timer.h"
+int main()
+{
+  SimpleTimer timer(std::chrono::seconds(5), true);  // 单次执行: 5秒的间隔
+  timer.start(task);  // 5秒后会执行task, 后续不会重复
 }
 ```
 
