@@ -150,12 +150,12 @@ class SimpleTimer
         catch (const std::exception& e)
         {
           state_ = State::Stopped;  // 出现异常时停止定时器 (不能调用stop()会死锁)
-          std::fprintf(stderr, "[SimpleTimer] Exception: %s\n", e.what());
+          std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Exception: %s\033[0m\n\n", e.what());
         }
         catch (...)
         {
           state_ = State::Stopped;  // 出现异常时停止定时器
-          std::fprintf(stderr, "[SimpleTimer] Unknown exception occurred.\n");
+          std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Unknown exception occurred.\033[0m\n\n");
         }
         lock.lock();
 
