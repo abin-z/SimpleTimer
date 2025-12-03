@@ -265,13 +265,13 @@ class SimpleTimer
 
  private:
   // 定时器间隔, 默认10秒
-  clock::duration interval_ = std::chrono::seconds(10);
-  bool interval_changed_ = false;  // 时间间隔是否被修改过
-  bool one_shot_ = false;          // 是否只触发一次
-  std::atomic<State> state_;       // 定时器状态
-  std::thread thread_;             // 定时器线程
-  std::mutex mutex_;               // 互斥锁, 确保线程安全
-  std::condition_variable cv_;     // 条件变量, 用于暂停和恢复
+  clock::duration interval_{std::chrono::seconds(10)};
+  bool interval_changed_{false};  // 时间间隔是否被修改过
+  bool one_shot_{false};          // 是否只触发一次
+  std::atomic<State> state_;      // 定时器状态
+  std::thread thread_;            // 定时器线程
+  std::mutex mutex_;              // 互斥锁, 确保线程安全
+  std::condition_variable cv_;    // 条件变量, 用于暂停和恢复
 };
 
 #endif  // SIMPLE_TIMER_H
