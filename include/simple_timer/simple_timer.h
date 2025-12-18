@@ -97,19 +97,19 @@ class SimpleTimer
   }
 
   // Delete copy constructor and copy assignment operator
-  SimpleTimer(const SimpleTimer&) = delete;
-  SimpleTimer& operator=(const SimpleTimer&) = delete;
+  SimpleTimer(const SimpleTimer &) = delete;
+  SimpleTimer &operator=(const SimpleTimer &) = delete;
 
   // Delete move constructor and move assignment operator
-  SimpleTimer(SimpleTimer&&) = delete;
-  SimpleTimer& operator=(SimpleTimer&&) = delete;
+  SimpleTimer(SimpleTimer &&) = delete;
+  SimpleTimer &operator=(SimpleTimer &&) = delete;
 
   /// @brief Starts the timer
   /// @tparam Func Callable object type
   /// @param f A callable object to be executed when the timer expires
   /// @note The timer task will be executed in a new thread
   template <typename Func>
-  void start(Func&& f)
+  void start(Func &&f)
   {
     stop();                                        // 确保没有其他线程在运行(替换旧任务)
     state_ = State::Running;                       // 设置状态为运行中
@@ -147,7 +147,7 @@ class SimpleTimer
         {
           task();  // 执行任务
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
           state_ = State::Stopped;  // 出现异常时停止定时器 (不能调用stop()会死锁)
           std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Exception: %s\033[0m\n\n", e.what());
@@ -174,7 +174,7 @@ class SimpleTimer
   /// @tparam Func Callable object type
   /// @param f A callable object to be executed when the timer expires
   template <typename Func>
-  void restart(Func&& f)
+  void restart(Func &&f)
   {
     stop();
     start(std::forward<Func>(f));
