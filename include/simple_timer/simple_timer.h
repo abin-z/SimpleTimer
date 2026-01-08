@@ -29,6 +29,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdint>
 #include <cstdio>
 #include <mutex>
 #include <thread>
@@ -71,7 +72,7 @@ class SimpleTimer
   /// @param interval The time interval
   /// @param one_shot If true, the timer will only trigger once
   template <typename Rep, typename Period>
-  SimpleTimer(std::chrono::duration<Rep, Period> interval, bool one_shot = false) :
+  explicit SimpleTimer(std::chrono::duration<Rep, Period> interval, bool one_shot = false) :
     interval_(interval), one_shot_(one_shot), state_(State::Stopped)
   {
   }
@@ -79,14 +80,14 @@ class SimpleTimer
   /// @brief Constructs a SimpleTimer with a millisecond interval
   /// @param milliseconds The time interval in milliseconds
   /// @param one_shot If true, the timer will only trigger once
-  explicit SimpleTimer(long long milliseconds, bool one_shot = false) :
+  explicit SimpleTimer(int64_t milliseconds, bool one_shot = false) :
     SimpleTimer(std::chrono::milliseconds(milliseconds), one_shot)  // 代理到主构造函数
   {
   }
 
   /// @brief Constructs a SimpleTimer with a default interval of 10 seconds
   /// @param one_shot If true, the timer will only trigger once
-  SimpleTimer(bool one_shot = false) : SimpleTimer(std::chrono::seconds(10), one_shot)  // 默认间隔为10秒
+  explicit SimpleTimer(bool one_shot = false) : SimpleTimer(std::chrono::seconds(10), one_shot)  // 默认间隔为10秒
   {
   }
 
@@ -233,7 +234,7 @@ class SimpleTimer
 
   /// @brief Sets a new timer interval, takes effect immediately
   /// @param milliseconds New interval in milliseconds
-  void set_interval(long long milliseconds)
+  void set_interval(int64_t milliseconds)
   {
     set_interval(std::chrono::milliseconds(milliseconds));
   }
