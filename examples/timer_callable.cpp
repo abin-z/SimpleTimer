@@ -21,12 +21,12 @@ class MyClass
  public:
   int num = 999;
   // 成员函数
-  void func()
+  void func() const
   {
     std::cout << "MyClass::func() called! num = " << num << std::endl;
   }
   // 成员函数带参数
-  void func2(int a, int b, int c)
+  void func2(int a, int b, int c) const
   {
     std::cout << "MyClass::func2() called! a = " << a << ", b = " << b << ", c = " << c << std::endl;
   }
@@ -56,7 +56,7 @@ class MyClass2
     timer_.start([this]() { this->heartbeat(); });
   }
 
-  void heartbeat()  // 模拟发送心跳
+  void heartbeat() const  // 模拟发送心跳
   {
     std::cout << "MyClass2::heartbeat() called!" << std::endl;
   }
