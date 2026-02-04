@@ -25,8 +25,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 project(SimpleTimer LANGUAGES C CXX VERSION 0.9.1)
 
 # 启用测试功能
-include(CTest)    # 启用 CTest 框架
-enable_testing()  # 允许 add_test() 添加测试, 须放在 add_test() 之前
+include(CTest)    # 启用 CTest 框架, 须放在 add_test() 之前
 
 # 添加子目录
 add_subdirectory(include)
