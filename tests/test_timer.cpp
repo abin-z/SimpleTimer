@@ -445,3 +445,156 @@ TEST_CASE("Stop then start repeatedly", "[SimpleTimer]")
 
   REQUIRE(counter >= 2);
 }
+
+// TODO 在回调中调用 stop/restart 等情况的测试, 以确保不会死锁或崩溃(待修复)
+
+TEST_CASE("Callback calls stop()", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(30));
+
+  timer.start([&]() {
+    counter++;
+    timer.stop();  // 在回调线程里 stop 自己
+  });
+
+  std::this_thread::sleep_for(milliseconds(100));
+
+  REQUIRE(counter == 1);  // 只能执行一次，且不能死锁
+}
+
+// TEST_CASE("Callback calls restart()", "[SimpleTimer]")
+// {
+//   std::atomic<int> counter(0);
+//   SimpleTimer timer(milliseconds(30));
+
+//   timer.start([&]() {
+//     counter++;
+//     if (counter == 1) timer.restart([&]() { counter++; });
+//   });
+
+//   std::this_thread::sleep_for(milliseconds(120));
+//   timer.stop();
+
+//   REQUIRE(counter >= 2);
+// }
+
+// TEST_CASE("Concurrent stop calls", "[SimpleTimer]")
+// {
+//   std::atomic<int> counter(0);
+//   SimpleTimer timer(milliseconds(30));
+
+//   timer.start([&]() { counter++; });
+//   std::this_thread::sleep_for(milliseconds(50));
+
+//   std::thread t1([&]() { timer.stop(); });
+//   std::thread t2([&]() { timer.stop(); });
+//   std::thread t3([&]() { timer.stop(); });
+
+//   t1.join();
+//   t2.join();
+//   t3.join();
+
+//   REQUIRE(counter >= 1);
+// }
+
+// TEST_CASE("Concurrent start and stop", "[SimpleTimer]")
+// {
+//   std::atomic<int> counter(0);
+//   SimpleTimer timer(milliseconds(30));
+
+//   std::thread t1([&]() {
+//     for (int i = 0; i < 5; ++i) timer.start([&]() { counter++; });
+//   });
+
+//   std::thread t2([&]() {
+//     for (int i = 0; i < 5; ++i) timer.stop();
+//   });
+
+//   t1.join();
+//   t2.join();
+
+//   std::this_thread::sleep_for(milliseconds(100));
+//   timer.stop();
+
+//   REQUIRE(counter >= 0);  // 重点是“不崩”
+// }
+
+// TEST_CASE("Destructor stops timer safely", "[SimpleTimer]")
+// {
+//   std::atomic<int> counter(0);
+
+//   {
+//     SimpleTimer timer(milliseconds(30));
+//     timer.start([&]() { counter++; });
+//     std::this_thread::sleep_for(milliseconds(50));
+//   }  // 析构
+
+//   int value = counter.load();
+//   std::this_thread::sleep_for(milliseconds(100));
+
+//   REQUIRE(counter == value);  // 析构后不再增长
+// }
+
+// TEST_CASE("Destroy timer during callback", "[SimpleTimer]")
+// {
+//   std::atomic<int> counter(0);
+//   std::unique_ptr<SimpleTimer> timer;
+
+//   timer.reset(new SimpleTimer(milliseconds(30)));
+//   timer->start([&]() {
+//     counter++;
+//     timer.reset();  // 回调中析构自己
+//   });
+
+//   std::this_thread::sleep_for(milliseconds(100));
+
+//   REQUIRE(counter == 1);
+// }
+
+// TEST_CASE("Pause prevents callback execution", "[SimpleTimer]")
+// {
+//   std::atomic<int> counter(0);
+//   SimpleTimer timer(milliseconds(30));
+
+//   timer.start([&]() { counter++; });
+//   std::this_thread::sleep_for(milliseconds(60));
+//   timer.pause();
+
+//   int paused_value = counter.load();
+//   std::this_thread::sleep_for(milliseconds(100));
+
+//   timer.stop();
+
+//   REQUIRE(counter == paused_value);
+// }
+
+// TEST_CASE("Resume does not catch up missed ticks", "[SimpleTimer]")
+// {
+//   std::atomic<int> counter(0);
+//   SimpleTimer timer(milliseconds(30));
+
+//   timer.start([&]() { counter++; });
+//   std::this_thread::sleep_for(milliseconds(60));
+
+//   timer.pause();
+//   std::this_thread::sleep_for(milliseconds(120));
+
+//   timer.resume();
+//   std::this_thread::sleep_for(milliseconds(60));
+//   timer.stop();
+
+//   REQUIRE(counter <= 4);  // 不应疯狂补跑
+// }
+
+// TEST_CASE("Callback throws exception", "[SimpleTimer]")
+// {
+//   SimpleTimer timer(milliseconds(30));
+
+//   timer.start([]() { throw std::runtime_error("boom"); });
+
+//   std::this_thread::sleep_for(milliseconds(60));
+//   timer.stop();
+
+//   SUCCEED();  // 不崩就行
+// }
