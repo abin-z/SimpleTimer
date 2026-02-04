@@ -335,3 +335,113 @@ TEST_CASE("Multiple restart calls after stop", "[SimpleTimer]")
 
   REQUIRE(counter >= 3);  // 至少执行了三次
 }
+
+TEST_CASE("Stop before start then start", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(50));
+
+  timer.stop();  // 尚未 start 就 stop，应当是安全的
+  timer.stop();  // 尚未 start 就 stop，应当是安全的
+  timer.stop();  // 尚未 start 就 stop，应当是安全的
+  timer.stop();  // 尚未 start 就 stop，应当是安全的
+
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(120));
+  timer.stop();
+
+  REQUIRE(counter >= 1);  // start 后应至少触发一次
+}
+
+TEST_CASE("Stop before resume then start", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(50));
+
+  timer.resume();  // 尚未 start 就 resume，应当是安全的
+  timer.resume();  // 尚未 start 就 resume，应当是安全的
+  timer.resume();  // 尚未 start 就 resume，应当是安全的
+  timer.resume();  // 尚未 start 就 resume，应当是安全的
+
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(120));
+  timer.stop();
+
+  REQUIRE(counter >= 1);  // start 后应至少触发一次
+}
+
+TEST_CASE("Stop before pause then start", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(50));
+
+  timer.pause();  // 尚未 start 就 pause，应当是安全的
+  timer.pause();  // 尚未 start 就 pause，应当是安全的
+  timer.pause();  // 尚未 start 就 pause，应当是安全的
+  timer.pause();  // 尚未 start 就 pause，应当是安全的
+
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(120));
+  timer.stop();
+
+  REQUIRE(counter >= 1);  // start 后应至少触发一次
+}
+
+TEST_CASE("Stop before stop pause resume then start", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(50));
+
+  timer.stop();    // 尚未 start 就 stop，应当是安全的
+  timer.pause();   // 尚未 start 就 pause，应当是安全的
+  timer.resume();  // 尚未 start 就 resume，应当是安全的
+  timer.stop();    // 尚未 start 就 stop，应当是安全的
+
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(120));
+  timer.stop();
+
+  REQUIRE(counter >= 1);  // start 后应至少触发一次
+}
+
+TEST_CASE("Stop before stop pause resume then restart", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(50));
+
+  timer.stop();    // 尚未 start 就 stop，应当是安全的
+  timer.pause();   // 尚未 start 就 pause，应当是安全的
+  timer.resume();  // 尚未 start 就 resume，应当是安全的
+  timer.stop();    // 尚未 start 就 stop，应当是安全的
+
+  timer.restart([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(120));
+  timer.stop();
+
+  REQUIRE(counter >= 1);  // start 后应至少触发一次
+}
+
+TEST_CASE("Stop then start repeatedly", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(30));
+
+  timer.stop();
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(80));
+  timer.stop();
+
+  timer.stop();  // 连续 stop
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(80));
+  timer.stop();
+
+  REQUIRE(counter >= 2);
+}
