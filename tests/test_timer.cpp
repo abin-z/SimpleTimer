@@ -446,6 +446,60 @@ TEST_CASE("Stop then start repeatedly", "[SimpleTimer]")
   REQUIRE(counter >= 2);
 }
 
+TEST_CASE("test one-shot", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(10), true);  // one-shot 模式
+
+  timer.start([&]() { counter++; });
+  timer.start([&]() { counter++; });
+  timer.start([&]() { counter++; });
+  timer.start([&]() { counter++; });
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(100));
+
+  // 由于立即调用了多次 start, 但 one-shot 模式只应触发第一次(start会先调用stop停止旧任务), 后续的 start 应该被 stop
+  // 直接覆盖掉, 因此只会触发一次
+  REQUIRE(counter == 1);
+}
+
+TEST_CASE("test one-shot 2", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(10), true);  // one-shot 模式
+
+  timer.start([&]() { counter++; });
+  timer.start([&]() { counter++; });
+  timer.start([&]() { counter++; });
+  std::this_thread::sleep_for(milliseconds(20));
+  timer.start([&]() { counter++; });
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(100));
+  REQUIRE(counter == 2);
+}
+
+TEST_CASE("test one-shot 3", "[SimpleTimer]")
+{
+  std::atomic<int> counter(0);
+  SimpleTimer timer(milliseconds(10), true);  // one-shot 模式
+
+  timer.start([&]() { counter++; });
+  std::this_thread::sleep_for(milliseconds(20));
+  timer.start([&]() { counter++; });
+  std::this_thread::sleep_for(milliseconds(20));
+  timer.start([&]() { counter++; });
+  std::this_thread::sleep_for(milliseconds(20));
+  timer.start([&]() { counter++; });
+  std::this_thread::sleep_for(milliseconds(20));
+  timer.start([&]() { counter++; });
+
+  std::this_thread::sleep_for(milliseconds(1000));
+
+  REQUIRE(counter == 5);  // 每次 start 都应触发一次，且 one-shot 不应影响后续 start 的行为
+}
+
 // TODO 在回调中调用 stop/restart 等情况的测试, 以确保不会死锁或崩溃(待修复)
 
 TEST_CASE("Callback calls stop()", "[SimpleTimer]")
