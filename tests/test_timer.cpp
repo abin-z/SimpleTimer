@@ -458,16 +458,17 @@ TEST_CASE("Stop then start repeatedly", "[SimpleTimer]")
   timer.stop();
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(80));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();
-
+  int first = counter.load();
+  REQUIRE(first >= 1);
   timer.stop();  // 连续 stop
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(80));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();
 
-  REQUIRE(counter >= 2);
+  REQUIRE(counter >= first + 1);
 }
 
 TEST_CASE("test one-shot", "[SimpleTimer]")

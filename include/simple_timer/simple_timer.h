@@ -187,9 +187,9 @@ class SimpleTimer
   {
     state_ = State::Stopped;
     cv_.notify_all();  // 唤醒等待的线程
-    if (thread_.joinable())
+    if (thread_.joinable() && thread_.get_id() != std::this_thread::get_id())
     {
-      thread_.join();  // 等待线程结束
+      thread_.join();  // 等待线程结束, 避免自己 join 自己(死锁)
     }
   }
 
