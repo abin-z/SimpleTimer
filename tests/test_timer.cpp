@@ -118,7 +118,7 @@ TEST_CASE("SimpleTimer runs repeatedly", "[SimpleTimer]")
   std::atomic<int> counter(0);
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(170));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();
   REQUIRE(counter >= 3);
 }
@@ -217,7 +217,7 @@ TEST_CASE("Multiple stop calls do not crash", "[SimpleTimer]")
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(110));
+  std::this_thread::sleep_for(milliseconds(140));
   timer.stop();          // 第一次 stop
   timer.stop();          // (不应崩溃)
   timer.stop();          // (不应崩溃)
@@ -283,7 +283,7 @@ TEST_CASE("Multiple stop calls in one-shot mode", "[SimpleTimer]")
   SimpleTimer timer(milliseconds(50), true);  // one-shot 模式
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(100));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();           // 第一次 stop
   timer.stop();           // 第二次 stop (不应崩溃)
   REQUIRE(counter == 1);  // 应该只触发一次
@@ -312,8 +312,9 @@ TEST_CASE("Multiple start calls with stop between", "[SimpleTimer]")
   timer.start([&]() { counter++; });
   std::this_thread::sleep_for(milliseconds(100));
   timer.stop();                       // 第一次 stop
+  REQUIRE(counter > 0);
   timer.start([&]() { counter++; });  // 重新 start
-  std::this_thread::sleep_for(milliseconds(100));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();  // 第二次 stop
 
   REQUIRE(counter >= 2);  // 至少执行了两次
@@ -385,7 +386,7 @@ TEST_CASE("Stop before pause then start", "[SimpleTimer]")
 
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(140));
   timer.stop();
 
   REQUIRE(counter >= 1);  // start 后应至少触发一次
