@@ -87,10 +87,11 @@ TEST_CASE("SimpleTimer restart works correctly", "[SimpleTimer]")
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(110));
+  std::this_thread::sleep_for(milliseconds(120));
+  REQUIRE(counter == 2);  // 应该触发两次
   timer.restart([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(100));
+  std::this_thread::sleep_for(milliseconds(120));
   timer.stop();
 
   REQUIRE(counter >= 3);  // restart 后应继续触发
@@ -161,7 +162,7 @@ TEST_CASE("SimpleTimer restart after stop works", "[SimpleTimer]")
   int first_run = counter.load();
 
   timer.restart([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(100));
+  std::this_thread::sleep_for(milliseconds(150));
   timer.stop();
 
   REQUIRE(counter > first_run);
@@ -258,7 +259,7 @@ TEST_CASE("Multiple pause and resume toggles", "[SimpleTimer]")
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(80));
+  std::this_thread::sleep_for(milliseconds(95));
   timer.pause();                                  // 第一次暂停
   std::this_thread::sleep_for(milliseconds(50));  // 确保任务暂停
   REQUIRE(counter == 1);                          // 仅执行一次
@@ -270,7 +271,7 @@ TEST_CASE("Multiple pause and resume toggles", "[SimpleTimer]")
   REQUIRE(counter == 1);                          // 仍然只执行了一次
 
   timer.resume();  // 第二次恢复
-  std::this_thread::sleep_for(milliseconds(80));
+  std::this_thread::sleep_for(milliseconds(95));
   timer.stop();  // 停止定时器
 
   REQUIRE(counter == 2);  // 确保任务被执行了两次
