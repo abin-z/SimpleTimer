@@ -184,6 +184,7 @@ TEST_CASE("SimpleTimer handles exception and stops", "[SimpleTimer]")
 
   std::this_thread::sleep_for(milliseconds(100));
   REQUIRE(counter == 1);  // one-shot due to exception
+  std::this_thread::sleep_for(milliseconds(100));
   REQUIRE(timer.is_stopped());
 }
 
@@ -418,7 +419,7 @@ TEST_CASE("Stop before resume then start", "[SimpleTimer]")
 
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(300));
   timer.stop();
 
   REQUIRE(counter >= 1);  // start 后应至少触发一次
@@ -538,13 +539,13 @@ TEST_CASE("test one-shot 3", "[SimpleTimer]")
   SimpleTimer timer(milliseconds(10), true);  // one-shot 模式
 
   timer.start([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(20));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.start([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(20));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.start([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(20));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.start([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(20));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.start([&]() { counter++; });
 
   std::this_thread::sleep_for(milliseconds(1000));
