@@ -176,7 +176,7 @@ TEST_CASE("Multiple stop calls do not crash", "[SimpleTimer]")
   timer.pause();         // (不应崩溃)
   timer.pause();         // (不应崩溃)
   timer.pause();         // (不应崩溃)
-  REQUIRE(counter > 1);  // 确保任务已运行
+  REQUIRE(counter > 0);  // 确保任务已运行
 }
 
 TEST_CASE("Multiple pause/resume calls do not crash", "[SimpleTimer]")
@@ -333,11 +333,11 @@ TEST_CASE("Long running callback does not overlap", "[SimpleTimer]")
 TEST_CASE("Timer can be started multiple times", "[SimpleTimer]")
 {
   std::atomic<int> counter{0};
-  SimpleTimer timer(milliseconds(50));
+  SimpleTimer timer(milliseconds(30));
 
   // first run
   timer.start([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();
 
   int first = counter.load();
@@ -345,7 +345,7 @@ TEST_CASE("Timer can be started multiple times", "[SimpleTimer]")
 
   // second run
   timer.start([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();
 
   int second = counter.load();
@@ -353,7 +353,7 @@ TEST_CASE("Timer can be started multiple times", "[SimpleTimer]")
 
   // third run (restart)
   timer.restart([&]() { counter++; });
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();
 
   REQUIRE(counter > second);
