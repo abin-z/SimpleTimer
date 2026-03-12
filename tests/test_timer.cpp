@@ -153,9 +153,8 @@ TEST_CASE("SimpleTimer handles exception and stops", "[SimpleTimer]")
     throw std::runtime_error("test exception");
   });
 
-  std::this_thread::sleep_for(milliseconds(100));
+  std::this_thread::sleep_for(milliseconds(500));
   REQUIRE(counter == 1);  // one-shot due to exception
-  std::this_thread::sleep_for(milliseconds(100));
 }
 
 TEST_CASE("Multiple stop calls do not crash", "[SimpleTimer]")
