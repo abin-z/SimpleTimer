@@ -1,4 +1,4 @@
-name: Build & Test & Install (Unix)
+name: Build&Test
 
 on:
   push:
