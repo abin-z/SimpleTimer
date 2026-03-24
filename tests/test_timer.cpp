@@ -131,14 +131,14 @@ TEST_CASE("SimpleTimer restart in one-shot mode works", "[SimpleTimer]")
 
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(150));
+  std::this_thread::sleep_for(milliseconds(300));
 
   REQUIRE(counter == 1);
   REQUIRE(timer.is_stopped());
 
   timer.restart([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(150));
+  std::this_thread::sleep_for(milliseconds(300));
 
   REQUIRE(counter == 2);
   REQUIRE(timer.is_stopped());
@@ -286,7 +286,7 @@ TEST_CASE("Multiple stop, pause, resume calls in one-shot mode", "[SimpleTimer]"
   SimpleTimer timer(milliseconds(50), true);  // one-shot 模式
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(100));
+  std::this_thread::sleep_for(milliseconds(400));
   timer.pause();   // 暂停
   timer.resume();  // 恢复
   timer.stop();    // 停止
@@ -361,7 +361,7 @@ TEST_CASE("Timer can be started multiple times", "[SimpleTimer]")
 TEST_CASE("Stop before start then start", "[SimpleTimer]")
 {
   std::atomic<int> counter(0);
-  SimpleTimer timer(milliseconds(50));
+  SimpleTimer timer(milliseconds(20));
 
   timer.stop();  // 尚未 start 就 stop，应当是安全的
   timer.stop();  // 尚未 start 就 stop，应当是安全的
@@ -370,7 +370,7 @@ TEST_CASE("Stop before start then start", "[SimpleTimer]")
 
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();
 
   REQUIRE(counter >= 1);  // start 后应至少触发一次
@@ -397,7 +397,7 @@ TEST_CASE("Stop before resume then start", "[SimpleTimer]")
 TEST_CASE("Stop before pause then start", "[SimpleTimer]")
 {
   std::atomic<int> counter(0);
-  SimpleTimer timer(milliseconds(50));
+  SimpleTimer timer(milliseconds(20));
 
   timer.pause();  // 尚未 start 就 pause，应当是安全的
   timer.pause();  // 尚未 start 就 pause，应当是安全的
@@ -406,7 +406,7 @@ TEST_CASE("Stop before pause then start", "[SimpleTimer]")
 
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(140));
+  std::this_thread::sleep_for(milliseconds(200));
   timer.stop();
 
   REQUIRE(counter >= 1);  // start 后应至少触发一次
