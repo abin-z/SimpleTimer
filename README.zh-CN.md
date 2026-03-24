@@ -1,6 +1,12 @@
 # SimpleTimer  一个跨平台的轻量级定时器
 
-[![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer) [![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h) [![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170) [![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT) [![version](https://img.shields.io/badge/version-0.9.1-green)](https://github.com/abin-z/SimpleTimer/releases)
+[![Timer](https://img.shields.io/badge/SimpleTimer-8A2BE2)](https://github.com/abin-z/SimpleTimer)
+[![headeronly](https://img.shields.io/badge/Header_Only-green)](include/simple_timer/simple_timer.h)
+[![moderncpp](https://img.shields.io/badge/Modern_C%2B%2B-218c73)](https://learn.microsoft.com/en-us/cpp/cpp/welcome-back-to-cpp-modern-cpp?view=msvc-170)
+[![licenseMIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/license/MIT)
+[![cpp](https://img.shields.io/badge/Compatibility-C++11-darkgreen.svg)](https://isocpp.org)
+[![version](https://img.shields.io/badge/version-0.9.1-green)](https://github.com/abin-z/SimpleTimer/releases)
+[![ci](https://github.com/abin-z/SimpleTimer/actions/workflows/cmake_unix.yml/badge.svg)](https://github.com/abin-z/SimpleTimer/actions/workflows/cmake_unix.yml)
 
 🌍 Languages/语言:  [English](README.md)  |  [简体中文](README.zh-CN.md)
 
