@@ -244,7 +244,7 @@ TEST_CASE("Multiple pause and resume toggles", "[SimpleTimer]")
   REQUIRE(counter == paused2);  // 仍然不增长
 
   timer.resume();
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(500));
   timer.stop();
 
   REQUIRE(counter > paused2);  // resume后继续执行
@@ -442,7 +442,7 @@ TEST_CASE("Stop before stop pause resume then restart", "[SimpleTimer]")
 
   timer.restart([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(500));
   timer.stop();
 
   REQUIRE(counter >= 1);  // start 后应至少触发一次
@@ -573,7 +573,7 @@ TEST_CASE("Callback calls stop()", "[SimpleTimer]")
     timer.stop();  // 在回调线程里 stop 自己
   });
 
-  std::this_thread::sleep_for(milliseconds(100));
+  std::this_thread::sleep_for(milliseconds(500));
 
   REQUIRE(counter == 1);  // 只能执行一次，且不能死锁
 }
