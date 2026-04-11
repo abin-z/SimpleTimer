@@ -1,4 +1,4 @@
-name: Build&Test(Windows)
+name: Windows CI
 
 on:
   push:
