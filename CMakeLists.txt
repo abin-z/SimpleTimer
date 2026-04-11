@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.20)
 
 project(SimpleTimer LANGUAGES C CXX VERSION 0.9.1)
 
+# 引入 GNUInstallDirs 模块, 提供标准安装目录变量
+# 例如：CMAKE_INSTALL_PREFIX, CMAKE_INSTALL_LIBDIR, CMAKE_INSTALL_INCLUDEDIR 等
+# 方便跨平台写 install(), 避免硬编码路径
+include(GNUInstallDirs)
+
 # ---------------------------------------------------------------------------------------
 # Set default build to Release for single-config generators (Makefile/Ninja)
 # ---------------------------------------------------------------------------------------
@@ -30,6 +35,10 @@ target_compile_options(simple_timer INTERFACE
   "$<${msvc_cxx}:$<BUILD_INTERFACE:/W3;/utf-8>>"
 )
 
+# POSIX系统下使用 pthread 库
+find_package(Threads REQUIRED)
+target_link_libraries(simple_timer INTERFACE Threads::Threads)
+
 # ----------------------------------------------------------
 # Detect master (top-level) project
 # ----------------------------------------------------------
@@ -49,11 +58,6 @@ if(SIMPLE_TIMER_MASTER_PROJECT)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-# POSIX系统下使用 pthread 库
-find_package(Threads REQUIRED)
-target_link_libraries(simple_timer INTERFACE Threads::Threads)
-
-
 # ----------------------------------------
 # Options for examples/tests/install
 # ----------------------------------------
@@ -68,6 +72,9 @@ endif()
 if(SIMPLE_TIMER_BUILD_TESTS)
   message(STATUS "[simple_timer] Building tests")
   include(CTest)
-  add_subdirectory(external)
+  if(NOT TARGET Catch2::Catch2)
+    message(STATUS "[simple_timer] building Catch2 from source")
+    add_subdirectory(external)
+  endif()
   add_subdirectory(tests)
 endif()
