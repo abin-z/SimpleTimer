@@ -15,7 +15,7 @@ void task_error()
 {
   static thread_local int num = 1;
   int64_t ms = get_ms() % 100000;
-  std::cout << ms << ": Task executed " << num << " times." << std::endl;
+  std::cout << ms << ": Task executed " << num << " times.\n";
   if (num == 11)
   {
     throw std::runtime_error("Boom! Error occurred in task.");
@@ -29,14 +29,14 @@ int main()
 
   // 启动定时器，任务每200ms执行一次
   timer.start(task_error);
-  std::cout << "Timer started, task will execute every 200ms." << std::endl;
+  std::cout << "Timer started, task will execute every 200ms.\n";
 
   // 让定时器跑一段时间，让任务有机会执行多次
   std::this_thread::sleep_for(std::chrono::seconds(5));  // 等待5秒钟
 
   // 停止定时器
   timer.stop();
-  std::cout << "Timer stopped after 5 seconds." << std::endl;
+  std::cout << "Timer stopped after 5 seconds.\n";
 
   return 0;
 }

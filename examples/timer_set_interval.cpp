@@ -16,11 +16,11 @@ int main()
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
   timer.set_interval(std::chrono::milliseconds(200));  // 立即采用新的interval
-  std::cout << "== timer.set_interval(std::chrono::milliseconds(200))" << std::endl;
+  std::cout << "== timer.set_interval(std::chrono::milliseconds(200))\n";
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   timer.set_interval(std::chrono::seconds(1));
-  std::cout << "== timer.set_interval(std::chrono::seconds(1))" << std::endl;
+  std::cout << "== timer.set_interval(std::chrono::seconds(1))\n";
   std::this_thread::sleep_for(std::chrono::seconds(5));
   return 0;
 }
