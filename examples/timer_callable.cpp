@@ -5,14 +5,14 @@
 /// 普通无参函数
 void func()
 {
-  std::cout << "Timer task executed!(via function)" << std::endl;
+  std::cout << "Timer task executed!(via function)\n";
 }
 
 /// 带参数的函数
 void func2(int a, int b, int c)
 {
-  std::cout << "Timer task executed!(via function with args)" << std::endl;
-  std::cout << "a = " << a << ", b = " << b << ", c = " << c << std::endl;
+  std::cout << "Timer task executed!(via function with args)\n";
+  std::cout << "a = " << a << ", b = " << b << ", c = " << c << '\n';
 }
 
 /// 测试类
@@ -23,12 +23,12 @@ class MyClass
   // 成员函数
   void func() const
   {
-    std::cout << "MyClass::func() called! num = " << num << std::endl;
+    std::cout << "MyClass::func() called! num = " << num << '\n';
   }
   // 成员函数带参数
   void func2(int a, int b, int c) const
   {
-    std::cout << "MyClass::func2() called! a = " << a << ", b = " << b << ", c = " << c << std::endl;
+    std::cout << "MyClass::func2() called! a = " << a << ", b = " << b << ", c = " << c << '\n';
   }
 };
 
@@ -37,7 +37,7 @@ struct Functor
 {
   void operator()()
   {
-    std::cout << "Timer task executed!(via Functor)" << std::endl;
+    std::cout << "Timer task executed!(via Functor)\n";
   }
 };
 
@@ -58,7 +58,7 @@ class MyClass2
 
   void heartbeat() const  // 模拟发送心跳
   {
-    std::cout << "MyClass2::heartbeat() called!" << std::endl;
+    std::cout << "MyClass2::heartbeat() called!\n";
   }
 };
 
@@ -66,7 +66,7 @@ class MyClass2
 void test_func()
 {
   SimpleTimer timer(std::chrono::milliseconds(210));
-  timer.start([]() { std::cout << "Timer task executed!(via lambda)" << std::endl; });
+  timer.start([]() { std::cout << "Timer task executed!(via lambda)\n"; });
   std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 

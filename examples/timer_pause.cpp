@@ -11,17 +11,17 @@ int main()
 {
   SimpleTimer timer(std::chrono::milliseconds(200));  // 200ms执行一次
 
-  timer.start([]() { std::cout << get_ms() << ": Timer task executed!" << std::endl; });
+  timer.start([]() { std::cout << get_ms() << ": Timer task executed!\n"; });
 
   // 等待 2 秒后暂停定时器
   std::this_thread::sleep_for(std::chrono::seconds(2));
   timer.pause();
-  std::cout << "Pausing timer 3s..." << std::endl;
+  std::cout << "Pausing timer 3s...\n";
 
   // 等待 3 秒后恢复定时器
   std::this_thread::sleep_for(std::chrono::seconds(3));
   timer.resume();
-  std::cout << "Resuming timer..." << std::endl;
+  std::cout << "Resuming timer...\n";
 
   // 等待定时器执行完成
   std::this_thread::sleep_for(std::chrono::seconds(2));

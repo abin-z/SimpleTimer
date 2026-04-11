@@ -9,18 +9,18 @@ int64_t get_ms()
 
 int main()
 {
-  std::cout << "[main start]: " << "main-thread-id = " << std::this_thread::get_id() << std::endl;
+  std::cout << "[main start]: " << "main-thread-id = " << std::this_thread::get_id() << '\n';
 
   SimpleTimer timer(std::chrono::seconds(1));  // 创建一个定时器, 每隔1秒执行一次
   // 启动定时器
   timer.start([]() {
     std::cout << "timer task thread id = " << std::this_thread::get_id() << ", current ms:" << get_ms() % 100000 << '\n';
   });
-  std::cout << "===== timer.start() =====" << std::endl;
+  std::cout << "===== timer.start() =====\n";
 
   std::this_thread::sleep_for(std::chrono::seconds(10));
   timer.stop();  // 停止定时器
-  std::cout << "===== timer.stop() =====" << std::endl;
+  std::cout << "===== timer.stop() =====\n";
 
-  std::cout << "[main end]: " << "main-thread-id = " << std::this_thread::get_id() << std::endl;
+  std::cout << "[main end]: " << "main-thread-id = " << std::this_thread::get_id() << '\n';
 }
