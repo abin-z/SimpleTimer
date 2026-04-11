@@ -7,6 +7,7 @@
 [![cpp](https://img.shields.io/badge/Compatibility-C++11-darkgreen.svg)](https://isocpp.org)
 [![version](https://img.shields.io/badge/version-0.9.1-green)](https://github.com/abin-z/SimpleTimer/releases)
 [![ci](https://github.com/abin-z/SimpleTimer/actions/workflows/cmake_unix.yml/badge.svg)](https://github.com/abin-z/SimpleTimer/actions/workflows/cmake_unix.yml)
+[![ci](https://github.com/abin-z/SimpleTimer/actions/workflows/cmake_windows.yml/badge.svg)](https://github.com/abin-z/SimpleTimer/actions/workflows/cmake_windows.yml)
 
 🌍 Languages/语言:  [English](README.md)  |  [简体中文](README.zh-CN.md)
 
