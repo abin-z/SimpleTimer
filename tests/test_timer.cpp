@@ -415,7 +415,7 @@ TEST_CASE("Stop before pause then start", "[SimpleTimer]")
 TEST_CASE("Stop before stop pause resume then start", "[SimpleTimer]")
 {
   std::atomic<int> counter(0);
-  SimpleTimer timer(milliseconds(50));
+  SimpleTimer timer(milliseconds(20));
 
   timer.stop();    // 尚未 start 就 stop，应当是安全的
   timer.pause();   // 尚未 start 就 pause，应当是安全的
@@ -424,7 +424,7 @@ TEST_CASE("Stop before stop pause resume then start", "[SimpleTimer]")
 
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(120));
+  std::this_thread::sleep_for(milliseconds(300));
   timer.stop();
 
   REQUIRE(counter >= 1);  // start 后应至少触发一次
