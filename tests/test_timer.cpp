@@ -163,7 +163,7 @@ TEST_CASE("Multiple stop calls do not crash", "[SimpleTimer]")
   SimpleTimer timer(milliseconds(50));
   timer.start([&]() { counter++; });
 
-  std::this_thread::sleep_for(milliseconds(140));
+  std::this_thread::sleep_for(milliseconds(300));
   timer.stop();          // 第一次 stop
   timer.stop();          // (不应崩溃)
   timer.stop();          // (不应崩溃)
