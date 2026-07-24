@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.15..3.31)
 
 project(SimpleTimer LANGUAGES C CXX VERSION 0.9.1)
 
