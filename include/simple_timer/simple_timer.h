@@ -30,6 +30,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <functional>
 #include <cstdio>
 #include <mutex>
 #include <thread>
@@ -112,11 +113,11 @@ class SimpleTimer
   template <typename Func>
   void start(Func &&f)
   {
-    stop();                                        // 确保没有其他线程在运行(替换旧任务)
-    state_ = State::Running;                       // 设置状态为运行中
-    auto task = std::move(std::forward<Func>(f));  // 完美转发后再 move, 提高效率
+    stop();                                  // 确保没有其他线程在运行(替换旧任务)
+    state_ = State::Running;                 // 设置状态为运行中
+    task_ = std::move(std::forward<Func>(f)); // 存储任务到成员变量，支持主动触发
     // 使用 std::thread 创建一个新的线程来执行定时器任务
-    thread_ = std::thread([this, task]() mutable {
+    thread_ = std::thread([this]() {
       std::unique_lock<std::mutex> lock(mutex_);
       auto next_time = clock::now() + interval_;
       while (true)
@@ -146,7 +147,7 @@ class SimpleTimer
         // Timer 内部处理异常, 执行task遇到异常后直接停止timer
         try
         {
-          task();  // 执行任务
+          task_();  // 执行任务
         }
         catch (const std::exception &e)
         {
@@ -169,6 +170,17 @@ class SimpleTimer
         next_time += interval_;  // 精确推进时间点, 避免偏差
       }
     });
+  }
+
+  /// @brief Manually triggers the timer task immediately
+  /// @note If the timer is not running or no task is set, this call will be ignored.
+  /// @note Executes in the calling thread. If the task requires synchronization, ensure thread safety.
+  void trigger()
+  {
+    if (state_ == State::Running && task_)
+    {
+      task_();
+    }
   }
 
   /// @brief Restarts the timer
@@ -267,6 +279,7 @@ class SimpleTimer
  private:
   // 定时器间隔, 默认10秒
   clock::duration interval_{std::chrono::seconds(10)};
+  std::function<void()> task_;  // 存储定时任务
   bool interval_changed_{false};  // 时间间隔是否被修改过
   bool one_shot_{false};          // 是否只触发一次
   std::atomic<State> state_;      // 定时器状态
