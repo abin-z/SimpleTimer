@@ -54,13 +54,11 @@
  */
 
 /// @brief A simple timer class
-class SimpleTimer
-{
+class SimpleTimer {
   using clock = std::chrono::steady_clock;  // 单调时钟, 不受系统时间变化影响
  public:
   /// @brief Timer state
-  enum class State : unsigned char
-  {
+  enum class State : unsigned char {
     Stopped = 0,  // 停止
     Running = 1,  // 运行中
     Paused = 2,   // 暂停
@@ -74,22 +72,19 @@ class SimpleTimer
   template <typename Rep, typename Period>
   explicit SimpleTimer(std::chrono::duration<Rep, Period> interval, bool one_shot = false) :
     interval_(interval), one_shot_(one_shot), state_(State::Stopped)
-  {
-  }
+  {}
 
   /// @brief Constructs a SimpleTimer with a millisecond interval
   /// @param milliseconds The time interval in milliseconds
   /// @param one_shot If true, the timer will only trigger once
   explicit SimpleTimer(int64_t milliseconds, bool one_shot = false) :
     SimpleTimer(std::chrono::milliseconds(milliseconds), one_shot)  // 代理到主构造函数
-  {
-  }
+  {}
 
   /// @brief Constructs a SimpleTimer with a default interval of 10 seconds
   /// @param one_shot If true, the timer will only trigger once
   explicit SimpleTimer(bool one_shot = false) : SimpleTimer(std::chrono::seconds(10), one_shot)  // 默认间隔为10秒
-  {
-  }
+  {}
 
   /// @brief Destructor. Automatically stops the timer to clean up resources.
   ~SimpleTimer()
