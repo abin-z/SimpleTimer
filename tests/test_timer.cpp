@@ -4,9 +4,44 @@
 #include <atomic>
 #include <catch.hpp>
 #include <chrono>
+#include <memory>
+#include <mutex>
+#include <stdexcept>
 #include <thread>
+#include <vector>
 
 using namespace std::chrono;
+
+namespace
+{
+template <typename Predicate>
+bool wait_for_condition(Predicate predicate, milliseconds timeout = milliseconds(1000))
+{
+  const auto deadline = steady_clock::now() + timeout;
+  while (!predicate() && steady_clock::now() < deadline)
+  {
+    std::this_thread::sleep_for(milliseconds(1));
+  }
+  return predicate();
+}
+
+struct MoveOnlyTask
+{
+  MoveOnlyTask(std::unique_ptr<int> value, std::atomic<int> &result) : value_(std::move(value)), result_(result) {}
+  MoveOnlyTask(MoveOnlyTask &&) = default;
+  MoveOnlyTask &operator=(MoveOnlyTask &&) = delete;
+  MoveOnlyTask(const MoveOnlyTask &) = delete;
+  MoveOnlyTask &operator=(const MoveOnlyTask &) = delete;
+
+  void operator()()
+  {
+    result_ += *value_;
+  }
+
+  std::unique_ptr<int> value_;
+  std::atomic<int> &result_;
+};
+}  // namespace
 
 TEST_CASE("SimpleTimer triggers task at interval", "[SimpleTimer]")
 {
@@ -19,6 +54,263 @@ TEST_CASE("SimpleTimer triggers task at interval", "[SimpleTimer]")
 
   REQUIRE(counter >= 3);
   REQUIRE(counter <= 4);  // 容许调度误差
+}
+
+TEST_CASE("Manual trigger executes a running timer before its interval", "[SimpleTimer][trigger]")
+{
+  std::atomic<int> counter{0};
+  SimpleTimer timer(seconds(5));
+  timer.start([&]() { counter++; });
+
+  timer.trigger();
+
+  const auto deadline = steady_clock::now() + milliseconds(500);
+  while (counter.load() == 0 && steady_clock::now() < deadline)
+  {
+    std::this_thread::sleep_for(milliseconds(1));
+  }
+
+  timer.stop();
+  REQUIRE(counter == 1);
+}
+
+TEST_CASE("Manual trigger is ignored unless the timer is running", "[SimpleTimer][trigger]")
+{
+  std::atomic<int> counter{0};
+  SimpleTimer timer(seconds(5));
+
+  timer.trigger();
+  REQUIRE_FALSE(wait_for_condition([&]() { return counter.load() != 0; }, milliseconds(30)));
+
+  timer.start([&]() { counter++; });
+  timer.pause();
+  timer.trigger();
+  REQUIRE_FALSE(wait_for_condition([&]() { return counter.load() != 0; }, milliseconds(30)));
+
+  timer.resume();
+  timer.trigger();
+  REQUIRE(wait_for_condition([&]() { return counter.load() == 1; }));
+
+  timer.stop();
+  timer.trigger();
+  REQUIRE_FALSE(wait_for_condition([&]() { return counter.load() != 1; }, milliseconds(30)));
+}
+
+TEST_CASE("Manual trigger runs the callback on the timer thread", "[SimpleTimer][trigger]")
+{
+  const std::thread::id caller_id = std::this_thread::get_id();
+  std::thread::id callback_id;
+  std::mutex callback_id_mutex;
+  std::atomic<bool> called{false};
+  SimpleTimer timer(seconds(5));
+  timer.start([&]() {
+    {
+      std::lock_guard<std::mutex> lock(callback_id_mutex);
+      callback_id = std::this_thread::get_id();
+    }
+    called = true;
+  });
+
+  timer.trigger();
+  REQUIRE(wait_for_condition([&]() { return called.load(); }));
+  timer.stop();
+
+  std::lock_guard<std::mutex> lock(callback_id_mutex);
+  REQUIRE(callback_id != caller_id);
+}
+
+TEST_CASE("Manual trigger preserves every sequential and concurrent request", "[SimpleTimer][trigger]")
+{
+  std::atomic<int> counter{0};
+  SimpleTimer timer(seconds(5));
+  timer.start([&]() { counter++; });
+
+  for (int i = 0; i < 5; ++i)
+  {
+    timer.trigger();
+  }
+
+  std::vector<std::thread> callers;
+  for (int thread_index = 0; thread_index < 4; ++thread_index)
+  {
+    callers.emplace_back([&]() {
+      for (int i = 0; i < 25; ++i)
+      {
+        timer.trigger();
+      }
+    });
+  }
+  for (std::size_t i = 0; i < callers.size(); ++i)
+  {
+    callers[i].join();
+  }
+
+  REQUIRE(wait_for_condition([&]() { return counter.load() == 105; }, milliseconds(2000)));
+  timer.stop();
+  REQUIRE(counter == 105);
+}
+
+TEST_CASE("Manual triggers queue while a callback is active and never overlap", "[SimpleTimer][trigger]")
+{
+  std::atomic<int> calls{0};
+  std::atomic<int> active{0};
+  std::atomic<int> maximum_active{0};
+  std::atomic<bool> release_first{false};
+  SimpleTimer timer(seconds(5));
+  timer.start([&]() {
+    const int now_active = ++active;
+    int observed = maximum_active.load();
+    while (observed < now_active && !maximum_active.compare_exchange_weak(observed, now_active))
+    {
+    }
+
+    const int call_number = ++calls;
+    if (call_number == 1)
+    {
+      while (!release_first.load())
+      {
+        std::this_thread::yield();
+      }
+    }
+    --active;
+  });
+
+  timer.trigger();
+  const bool first_call_started = wait_for_condition([&]() { return calls.load() == 1; });
+  if (!first_call_started)
+  {
+    release_first = true;
+    timer.stop();
+  }
+  REQUIRE(first_call_started);
+  timer.trigger();
+  timer.trigger();
+  timer.trigger();
+  release_first = true;
+
+  REQUIRE(wait_for_condition([&]() { return calls.load() == 4; }));
+  timer.stop();
+  REQUIRE(maximum_active == 1);
+}
+
+TEST_CASE("Manual trigger does not reset the scheduled deadline", "[SimpleTimer][trigger]")
+{
+  std::atomic<int> counter{0};
+  std::mutex times_mutex;
+  std::vector<steady_clock::time_point> callback_times;
+  SimpleTimer timer(milliseconds(2000));
+  timer.start([&]() {
+    {
+      std::lock_guard<std::mutex> lock(times_mutex);
+      callback_times.push_back(steady_clock::now());
+    }
+    counter++;
+  });
+
+  timer.trigger();
+  REQUIRE(wait_for_condition([&]() { return counter.load() == 1; }, milliseconds(500)));
+  const auto worker_ready_at = steady_clock::now();
+
+  std::this_thread::sleep_until(worker_ready_at + milliseconds(500));
+  REQUIRE(counter == 1);
+  const auto second_triggered_at = steady_clock::now();
+  timer.trigger();
+  REQUIRE(wait_for_condition([&]() { return counter.load() == 2; }, milliseconds(500)));
+
+  const bool scheduled_call_arrived = wait_for_condition([&]() { return counter.load() >= 3; }, milliseconds(2000));
+  timer.stop();
+  REQUIRE(scheduled_call_arrived);
+
+  std::lock_guard<std::mutex> lock(times_mutex);
+  REQUIRE(callback_times.size() >= 3);
+  REQUIRE(callback_times[2] - second_triggered_at < milliseconds(1800));
+}
+
+TEST_CASE("Stop discards pending manual triggers and restart begins with an empty queue", "[SimpleTimer][trigger]")
+{
+  std::atomic<int> calls{0};
+  std::atomic<bool> release_first{false};
+  SimpleTimer timer(seconds(5));
+  timer.start([&]() {
+    const int call_number = ++calls;
+    if (call_number == 1)
+    {
+      while (!release_first.load())
+      {
+        std::this_thread::yield();
+      }
+    }
+  });
+
+  timer.trigger();
+  const bool first_call_started = wait_for_condition([&]() { return calls.load() == 1; });
+  if (!first_call_started)
+  {
+    release_first = true;
+    timer.stop();
+  }
+  REQUIRE(first_call_started);
+  for (int i = 0; i < 5; ++i)
+  {
+    timer.trigger();
+  }
+
+  std::thread stopper([&]() { timer.stop(); });
+  const bool stop_started = wait_for_condition([&]() { return timer.is_stopped(); });
+  release_first = true;
+  stopper.join();
+  REQUIRE(stop_started);
+  REQUIRE(calls == 1);
+
+  timer.restart([&]() { calls++; });
+  REQUIRE_FALSE(wait_for_condition([&]() { return calls.load() != 1; }, milliseconds(30)));
+  timer.trigger();
+  REQUIRE(wait_for_condition([&]() { return calls.load() == 2; }));
+  timer.stop();
+}
+
+TEST_CASE("Manual trigger consumes a one-shot timer", "[SimpleTimer][trigger]")
+{
+  std::atomic<int> counter{0};
+  SimpleTimer timer(seconds(5), true);
+  timer.start([&]() { counter++; });
+
+  timer.trigger();
+  timer.trigger();
+  timer.trigger();
+
+  REQUIRE(wait_for_condition([&]() { return timer.is_stopped(); }));
+  timer.trigger();
+  std::this_thread::sleep_for(milliseconds(30));
+  timer.stop();
+  REQUIRE(counter == 1);
+}
+
+TEST_CASE("Exception from a manually triggered callback stops the timer", "[SimpleTimer][trigger]")
+{
+  SimpleTimer timer(seconds(5));
+  timer.start([]() { throw std::runtime_error("manual trigger failure"); });
+
+  timer.trigger();
+
+  REQUIRE(wait_for_condition([&]() { return timer.is_stopped(); }));
+  timer.stop();
+}
+
+TEST_CASE("Move-only tasks support manual and scheduled execution", "[SimpleTimer][trigger]")
+{
+  std::atomic<int> manual_result{0};
+  SimpleTimer manual_timer(seconds(5));
+  manual_timer.start(MoveOnlyTask(std::unique_ptr<int>(new int(7)), manual_result));
+  manual_timer.trigger();
+  REQUIRE(wait_for_condition([&]() { return manual_result.load() == 7; }));
+  manual_timer.stop();
+
+  std::atomic<int> scheduled_result{0};
+  SimpleTimer scheduled_timer(milliseconds(20), true);
+  scheduled_timer.start(MoveOnlyTask(std::unique_ptr<int>(new int(9)), scheduled_result));
+  REQUIRE(wait_for_condition([&]() { return scheduled_result.load() == 9; }));
+  scheduled_timer.stop();
 }
 
 TEST_CASE("Stop prevents further execution", "[SimpleTimer]")
