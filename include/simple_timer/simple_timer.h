@@ -29,10 +29,13 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <mutex>
 #include <thread>
+#include <type_traits>
+#include <utility>
 
 /**
  * @brief 使用 std::condition_variable 的 wait_until 方法 (也可以使用wait_for方法, 但是会累计误差)
@@ -107,63 +110,31 @@ class SimpleTimer {
   template <typename Func>
   void start(Func &&f)
   {
-    stop();                                        // 确保没有其他线程在运行(替换旧任务)
-    state_ = State::Running;                       // 设置状态为运行中
-    auto task = std::move(std::forward<Func>(f));  // 完美转发后再 move, 提高效率
-    // 使用 std::thread 创建一个新的线程来执行定时器任务
-    thread_ = std::thread([this, task]() mutable {
-      std::unique_lock<std::mutex> lock(mutex_);
-      auto next_time = clock::now() + interval_;
-      while (true)
+    stop();  // 确保没有其他线程在运行(替换旧任务)
+    typedef typename std::decay<Func>::type Task;
+    Task task(std::forward<Func>(f));
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      pending_triggers_ = 0;
+      state_ = State::Running;
+    }
+    thread_ = std::thread(&SimpleTimer::run<Task>, this, std::move(task));
+  }
+
+  /// @brief Requests immediate execution of the current timer task
+  /// @note The task is queued and executed asynchronously by the timer thread.
+  /// @note Requests are ignored while the timer is paused or stopped.
+  void trigger()
+  {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (state_ != State::Running)
       {
-        if (state_ == State::Stopped)
-        {
-          break;
-        }
-
-        while (state_ == State::Paused)
-        {
-          cv_.wait(lock, [this]() { return state_ != State::Paused; });
-          next_time = clock::now() + interval_;  // 重新计算下一次触发时间
-        }
-
-        if (cv_.wait_until(lock, next_time, [this]() { return state_ != State::Running || interval_changed_; }))
-        {
-          if (interval_changed_)  // interval_修改后立即使用新间隔
-          {
-            next_time = clock::now() + interval_;
-            interval_changed_ = false;
-          }
-          continue;  // 若状态不是 Running, 继续循环判断; 若是 interval_ 被修改, 则更新 next_time 并立即跳过等待
-        }
-
-        lock.unlock();
-        // Timer 内部处理异常, 执行task遇到异常后直接停止timer
-        try
-        {
-          task();  // 执行任务
-        }
-        catch (const std::exception &e)
-        {
-          state_ = State::Stopped;  // 出现异常时停止定时器 (不能调用stop()会死锁)
-          std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Exception: %s\033[0m\n\n", e.what());
-        }
-        catch (...)
-        {
-          state_ = State::Stopped;  // 出现异常时停止定时器
-          std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Unknown exception occurred.\033[0m\n\n");
-        }
-        lock.lock();
-
-        if (one_shot_)
-        {
-          state_ = State::Stopped;
-          break;
-        }
-
-        next_time += interval_;  // 精确推进时间点, 避免偏差
+        return;
       }
-    });
+      ++pending_triggers_;
+    }
+    cv_.notify_all();
   }
 
   /// @brief Restarts the timer
@@ -180,7 +151,11 @@ class SimpleTimer {
   /// @note This method may block until the running task completes.
   void stop()
   {
-    state_ = State::Stopped;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      state_ = State::Stopped;
+      pending_triggers_ = 0;
+    }
     cv_.notify_all();  // 唤醒等待的线程
     if (thread_.joinable() && thread_.get_id() != std::this_thread::get_id())
     {
@@ -260,8 +235,96 @@ class SimpleTimer {
   }
 
  private:
+  template <typename Task>
+  void run(Task task)
+  {
+    std::unique_lock<std::mutex> lock(mutex_);
+    auto next_time = clock::now() + interval_;
+    while (true)
+    {
+      if (state_ == State::Stopped)
+      {
+        break;
+      }
+
+      while (state_ == State::Paused)
+      {
+        cv_.wait(lock, [this]() { return state_ != State::Paused; });
+        next_time = clock::now() + interval_;
+      }
+
+      if (state_ == State::Stopped)
+      {
+        break;
+      }
+
+      bool scheduled_trigger = false;
+      if (pending_triggers_ == 0)
+      {
+        scheduled_trigger = !cv_.wait_until(lock, next_time, [this]() {
+          return state_ != State::Running || interval_changed_ || pending_triggers_ != 0;
+        });
+      }
+
+      if (state_ == State::Stopped)
+      {
+        break;
+      }
+      if (state_ == State::Paused)
+      {
+        continue;
+      }
+
+      if (interval_changed_)
+      {
+        next_time = clock::now() + interval_;
+        interval_changed_ = false;
+      }
+
+      const bool manual_trigger = pending_triggers_ != 0;
+      if (manual_trigger)
+      {
+        --pending_triggers_;
+      }
+      else if (!scheduled_trigger)
+      {
+        continue;
+      }
+
+      lock.unlock();
+      try
+      {
+        task();
+      }
+      catch (const std::exception &e)
+      {
+        state_ = State::Stopped;
+        std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Exception: %s\033[0m\n\n", e.what());
+      }
+      catch (...)
+      {
+        state_ = State::Stopped;
+        std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Unknown exception occurred.\033[0m\n\n");
+      }
+      lock.lock();
+
+      if (one_shot_ || state_ == State::Stopped)
+      {
+        state_ = State::Stopped;
+        pending_triggers_ = 0;
+        break;
+      }
+
+      if (!manual_trigger)
+      {
+        next_time += interval_;  // 精确推进时间点, 避免偏差
+      }
+    }
+  }
+
   // 定时器间隔, 默认10秒
   clock::duration interval_{std::chrono::seconds(10)};
+  std::size_t pending_triggers_{0};  // 待执行的手动触发请求数
   bool interval_changed_{false};  // 时间间隔是否被修改过
   bool one_shot_{false};          // 是否只触发一次
   std::atomic<State> state_;      // 定时器状态
