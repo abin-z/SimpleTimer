@@ -299,12 +299,12 @@ class SimpleTimer {
       catch (const std::exception &e)
       {
         state_ = State::Stopped;
-        std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Exception: %s\033[0m\n\n", e.what());
+        static_cast<void>(std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Exception: %s\033[0m\n\n", e.what()));
       }
       catch (...)
       {
         state_ = State::Stopped;
-        std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Unknown exception occurred.\033[0m\n\n");
+        static_cast<void>(std::fprintf(stderr, "\n\033[1;31m[SimpleTimer] Unknown exception occurred.\033[0m\n\n"));
       }
       lock.lock();
 
